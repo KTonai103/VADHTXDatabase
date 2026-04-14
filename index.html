@@ -5,10 +5,6 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>議事録 — 移植・VADデータベース合同 Web会議 2026-04-14</title>
 
-<!-- Firebase v9 compat (CDN) -->
-<script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-app-compat.js"></script>
-<script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-database-compat.js"></script>
-
 <style>
 /* ─── Reset & Tokens ─────────────────────────────────────── */
 :root {
@@ -54,14 +50,7 @@ body {
   color: #5c4500;
 }
 #setup-notice strong { display: block; margin-bottom: 4px; font-size: 0.92rem; }
-#setup-notice code {
-  background: rgba(0,0,0,0.07);
-  padding: 1px 5px;
-  border-radius: 3px;
-  font-family: 'Menlo', 'Consolas', monospace;
-  font-size: 0.85em;
-}
-#setup-notice a { color: #7d4e00; }
+#setup-notice a { color: #7d4e00; font-weight: 600; }
 
 /* ─── Header ─────────────────────────────────────────────── */
 .page-header {
@@ -605,13 +594,11 @@ body {
 <body>
 
 <!-- ── Setup Notice ──────────────────────────────────────── -->
-<div id="setup-notice">
-  <strong>コメント機能のセットアップが必要です</strong>
-  コメント機能を有効にするには、このファイル末尾の <code>FIREBASE_CONFIG</code> を
-  Firebase プロジェクトの設定値に置き換えてください。
-  設定方法：<a href="https://console.firebase.google.com/" target="_blank" rel="noopener">Firebase Console</a>
-  → プロジェクト設定 → Web アプリを追加 → 設定をコピー。
-  閲覧のみの場合は設定不要です。
+<div id="setup-notice" style="display:block">
+  <strong>コメント機能を有効にするには giscus のインストールが必要です</strong>
+  <a href="https://github.com/apps/giscus/installations/new" target="_blank" rel="noopener">こちらのリンク</a>
+  を開き、「Only select repositories」で <strong>VADHTXDatabase</strong> を選択してインストールしてください（約30秒）。
+  インストール後はページをリロードするとコメントが投稿できます。閲覧のみの場合は設定不要です。
 </div>
 
 <!-- ── Page Header ───────────────────────────────────────── -->
@@ -951,409 +938,183 @@ body {
   <span>Transplant &amp; VAD Database Consortium</span>
 </footer>
 
-
-<!-- ════════════════════════════════════════════════════════
-  FIREBASE CONFIGURATION
+<\!-- ════════════════════════════════════════════════════════
+  COMMENT SYSTEM: GitHub Discussions via giscus
   ─────────────────────────────────────────────────────────
-  GitHub Pages へデプロイ後にコメント機能を有効にするには、
-  下記 FIREBASE_CONFIG をお使いのプロジェクトの設定値に置き換えてください。
+  Repo   : KTonai103/VADHTXDatabase
+  Repo ID: R_kgDOSCZf-g
+  Category: General (DIC_kwDOSCZf-s4C603g)
 
-  設定手順:
-    1. https://console.firebase.google.com/ にアクセス
-    2. 新規プロジェクトを作成（例: "vad-meeting-minutes"）
-    3. Realtime Database を有効化（テストモードで開始）
-    4. プロジェクト設定 → Web アプリを追加
-    5. 表示された設定オブジェクトを下記にコピー
-
-  Realtime Database セキュリティルール（Firebase Console で設定）:
-    {
-      "rules": {
-        "vad-meeting-20260414": {
-          ".read": true,
-          ".write": true
-        }
-      }
-    }
+  必要な設定（一度だけ）:
+    https://github.com/apps/giscus にアクセスし、
+    "Only select repositories" で VADHTXDatabase を選択してインストール。
 ════════════════════════════════════════════════════════ -->
 <script>
 'use strict';
 
-// ── Firebase Configuration ──────────────────────────────
-// Replace all "YOUR_*" values with your actual Firebase project config.
-const FIREBASE_CONFIG = {
-  apiKey:            'YOUR_API_KEY',
-  authDomain:        'YOUR_PROJECT_ID.firebaseapp.com',
-  databaseURL:       'https://YOUR_PROJECT_ID-default-rtdb.firebaseio.com',
-  projectId:         'YOUR_PROJECT_ID',
-  storageBucket:     'YOUR_PROJECT_ID.appspot.com',
-  messagingSenderId: 'YOUR_SENDER_ID',
-  appId:             'YOUR_APP_ID'
+// ── giscus configuration ─────────────────────────────────
+const GISCUS = {
+  repo:       'KTonai103/VADHTXDatabase',
+  repoId:     'R_kgDOSCZf-g',
+  category:   'General',
+  categoryId: 'DIC_kwDOSCZf-s4C603g',
+  lang:       'ja',
+  theme:      'light'
 };
 
-// ── Constants ───────────────────────────────────────────
 const SECTION_IDS = ['1-1', '1-2', '2-1', '3-1', '3-2', '3-3', '3-4', '3-5'];
-const DB_PATH     = 'vad-meeting-20260414/comments';
-const IS_CONFIGURED = !FIREBASE_CONFIG.apiKey.includes('YOUR_');
-
-let db = null;
 
 // ── Bootstrap ────────────────────────────────────────────
 (function init() {
-  // Build comment UI for every section
-  SECTION_IDS.forEach(id => buildCommentUI(id));
-
-  // Restore saved author name
-  try {
-    const saved = localStorage.getItem('vad-comment-author');
-    if (saved) {
-      SECTION_IDS.forEach(id => {
-        const el = document.getElementById('author-' + id);
-        if (el && !el.value) el.value = saved;
-      });
-    }
-  } catch (_) { /* localStorage not available */ }
-
-  // Connect Firebase or show offline notice
-  if (IS_CONFIGURED) {
-    try {
-      firebase.initializeApp(FIREBASE_CONFIG);
-      db = firebase.database();
-      SECTION_IDS.forEach(id => subscribeSection(id));
-    } catch (err) {
-      console.error('Firebase init failed:', err);
-      showSetupNotice();
-      disableForms();
-    }
-  } else {
-    showSetupNotice();
-    disableForms();
-  }
-
-  // Sticky TOC active state
+  SECTION_IDS.forEach(function(id) { buildCommentUI(id); });
   initTOC();
 })();
 
-// ── Build Comment UI ────────────────────────────────────
+// ── Build comment UI (header + giscus placeholder) ───────
 function buildCommentUI(sectionId) {
   const container = document.getElementById('cs-' + sectionId);
-  if (!container) return;
+  if (\!container) return;
 
-  // -- Header row
+  // Header
   const header = document.createElement('div');
   header.className = 'comment-section-header';
   header.setAttribute('role', 'button');
   header.setAttribute('tabindex', '0');
   header.setAttribute('aria-expanded', 'true');
-  header.setAttribute('aria-controls', 'cbody-' + sectionId);
-  header.addEventListener('click', () => toggleComments(sectionId));
-  header.addEventListener('keydown', (e) => {
+  header.setAttribute('aria-controls', 'gbody-' + sectionId);
+  header.addEventListener('click', function() { toggleComments(sectionId); });
+  header.addEventListener('keydown', function(e) {
     if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); toggleComments(sectionId); }
   });
 
-  // Icon
-  const iconSvg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
+  // Chat icon
+  var iconSvg = makeSvg('0 0 24 24', '<path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/>');
   iconSvg.setAttribute('width', '15'); iconSvg.setAttribute('height', '15');
-  iconSvg.setAttribute('viewBox', '0 0 24 24'); iconSvg.setAttribute('fill', 'none');
-  iconSvg.setAttribute('stroke', 'currentColor'); iconSvg.setAttribute('stroke-width', '2');
-  iconSvg.setAttribute('stroke-linecap', 'round'); iconSvg.setAttribute('stroke-linejoin', 'round');
-  iconSvg.setAttribute('aria-hidden', 'true');
-  const iconPath = document.createElementNS('http://www.w3.org/2000/svg', 'path');
-  iconPath.setAttribute('d', 'M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z');
-  iconSvg.appendChild(iconPath);
 
-  const title = document.createElement('h4');
+  var title = document.createElement('h4');
   title.textContent = 'コメント・注記';
 
-  const countBadge = document.createElement('span');
-  countBadge.className = 'comment-count';
-  countBadge.id = 'comment-count-' + sectionId;
+  var note = document.createElement('span');
+  note.style.cssText = 'font-size:0.72rem;color:var(--muted);font-weight:normal;margin-left:4px;';
+  note.textContent = '(GitHub アカウントで投稿)';
 
-  const toggleBtn = document.createElement('button');
+  var toggleBtn = document.createElement('button');
   toggleBtn.className = 'comment-toggle';
   toggleBtn.id = 'toggle-btn-' + sectionId;
   toggleBtn.setAttribute('aria-label', 'コメントを開閉');
   toggleBtn.setAttribute('tabindex', '-1');
-  const chevronSvg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
-  chevronSvg.setAttribute('width', '14'); chevronSvg.setAttribute('height', '14');
-  chevronSvg.setAttribute('viewBox', '0 0 24 24'); chevronSvg.setAttribute('fill', 'none');
-  chevronSvg.setAttribute('stroke', 'currentColor'); chevronSvg.setAttribute('stroke-width', '2.5');
-  chevronSvg.setAttribute('stroke-linecap', 'round'); chevronSvg.setAttribute('stroke-linejoin', 'round');
-  chevronSvg.setAttribute('aria-hidden', 'true');
-  const chevronPoly = document.createElementNS('http://www.w3.org/2000/svg', 'polyline');
-  chevronPoly.setAttribute('points', '6 9 12 15 18 9');
-  chevronSvg.appendChild(chevronPoly);
-  toggleBtn.appendChild(chevronSvg);
+  var chevron = makeSvg('0 0 24 24', '<polyline points="6 9 12 15 18 9"/>');
+  chevron.setAttribute('width', '14'); chevron.setAttribute('height', '14');
+  toggleBtn.appendChild(chevron);
 
   header.appendChild(iconSvg);
   header.appendChild(title);
-  header.appendChild(countBadge);
+  header.appendChild(note);
   header.appendChild(toggleBtn);
 
-  // -- Collapsible body
-  const body = document.createElement('div');
-  body.className = 'comment-body';
-  body.id = 'cbody-' + sectionId;
+  // Giscus body
+  var body = document.createElement('div');
+  body.id = 'gbody-' + sectionId;
+  body.className = 'giscus-body';
+  body.style.cssText = 'padding:16px 22px 20px;background:var(--comment-bg);';
 
-  // Comments list
-  const list = document.createElement('div');
-  list.className = 'comments-list';
-  list.id = 'comments-list-' + sectionId;
-
-  const placeholder = document.createElement('p');
-  placeholder.className = 'no-comments';
-  placeholder.id = 'no-comments-' + sectionId;
-  placeholder.textContent = 'まだコメントはありません';
-  list.appendChild(placeholder);
-
-  // Form
-  const form = document.createElement('div');
-  form.className = 'comment-form';
-  form.id = 'form-' + sectionId;
-
-  const row = document.createElement('div');
-  row.className = 'comment-form-row';
-
-  const authorInput = document.createElement('input');
-  authorInput.type = 'text';
-  authorInput.className = 'comment-input-name';
-  authorInput.id = 'author-' + sectionId;
-  authorInput.placeholder = 'お名前（例：藤内 康平）';
-  authorInput.autocomplete = 'name';
-  row.appendChild(authorInput);
-
-  const textInput = document.createElement('textarea');
-  textInput.className = 'comment-input-text';
-  textInput.id = 'text-' + sectionId;
-  textInput.placeholder = 'このセクションに関するコメントや補足事項を記入してください…';
-  textInput.rows = 3;
-
-  const submitBtn = document.createElement('button');
-  submitBtn.type = 'button';
-  submitBtn.className = 'comment-submit';
-  submitBtn.id = 'submit-' + sectionId;
-  submitBtn.textContent = 'コメントを投稿';
-  submitBtn.addEventListener('click', () => submitComment(sectionId));
-
-  // Ctrl/Cmd+Enter shortcut
-  textInput.addEventListener('keydown', (e) => {
-    if (e.key === 'Enter' && (e.ctrlKey || e.metaKey)) { e.preventDefault(); submitComment(sectionId); }
-  });
-
-  form.appendChild(row);
-  form.appendChild(textInput);
-  form.appendChild(submitBtn);
-
-  body.appendChild(list);
-  body.appendChild(form);
+  // Placeholder shown until giscus loads
+  var placeholder = document.createElement('div');
+  placeholder.id = 'gph-' + sectionId;
+  placeholder.style.cssText = 'font-size:0.82rem;color:var(--muted);text-align:center;padding:12px 0;';
+  placeholder.textContent = '読み込み中…';
+  body.appendChild(placeholder);
 
   container.appendChild(header);
   container.appendChild(body);
+
+  // Lazy-load giscus when section scrolls into view
+  if ('IntersectionObserver' in window) {
+    var obs = new IntersectionObserver(function(entries, o) {
+      entries.forEach(function(entry) {
+        if (\!entry.isIntersecting) return;
+        o.unobserve(entry.target);
+        injectGiscus(body, sectionId);
+      });
+    }, { rootMargin: '300px' });
+    obs.observe(body);
+  } else {
+    injectGiscus(body, sectionId);
+  }
 }
 
-// ── Firebase subscription ────────────────────────────────
-function subscribeSection(sectionId) {
-  const ref = db.ref(DB_PATH + '/' + sectionId);
+// ── Inject giscus widget ─────────────────────────────────
+function injectGiscus(container, sectionId) {
+  var term = 'mtg-20260414-sec-' + sectionId;
+  var script = document.createElement('script');
+  script.src = 'https://giscus.app/client.js';
+  script.async = true;
+  script.crossOrigin = 'anonymous';
+  script.setAttribute('data-repo',              GISCUS.repo);
+  script.setAttribute('data-repo-id',           GISCUS.repoId);
+  script.setAttribute('data-category',          GISCUS.category);
+  script.setAttribute('data-category-id',       GISCUS.categoryId);
+  script.setAttribute('data-mapping',           'specific');
+  script.setAttribute('data-term',              term);
+  script.setAttribute('data-strict',            '0');
+  script.setAttribute('data-reactions-enabled', '0');
+  script.setAttribute('data-emit-metadata',     '0');
+  script.setAttribute('data-input-position',    'bottom');
+  script.setAttribute('data-theme',             GISCUS.theme);
+  script.setAttribute('data-lang',              GISCUS.lang);
+  container.appendChild(script);
 
-  ref.on('child_added', function(snapshot) {
-    const data = snapshot.val();
-    if (data) appendComment(sectionId, snapshot.key, data);
+  // Remove placeholder once giscus iframe arrives
+  script.addEventListener('load', function() {
+    var ph = document.getElementById('gph-' + sectionId);
+    if (ph) ph.remove();
   });
-
-  ref.on('child_removed', function(snapshot) {
-    const el = document.getElementById('comment-' + snapshot.key);
-    if (el) el.remove();
-    refreshPlaceholder(sectionId);
-    refreshCount(sectionId);
-  });
-}
-
-// ── Submit ────────────────────────────────────────────────
-function submitComment(sectionId) {
-  if (!db) return;
-
-  const authorEl = document.getElementById('author-' + sectionId);
-  const textEl   = document.getElementById('text-'   + sectionId);
-  const submitEl = document.getElementById('submit-' + sectionId);
-
-  const author = authorEl ? authorEl.value.trim() : '';
-  const text   = textEl   ? textEl.value.trim()   : '';
-
-  if (!author) { flashInvalid(authorEl); authorEl && authorEl.focus(); return; }
-  if (!text)   { flashInvalid(textEl);   textEl   && textEl.focus();   return; }
-
-  try { localStorage.setItem('vad-comment-author', author); } catch (_) {}
-
-  if (submitEl) { submitEl.disabled = true; submitEl.textContent = '投稿中…'; }
-
-  db.ref(DB_PATH + '/' + sectionId).push({
-    author:    author,
-    text:      text,
-    timestamp: firebase.database.ServerValue.TIMESTAMP
-  }).then(function() {
-    if (textEl)   textEl.value = '';
-    if (submitEl) { submitEl.disabled = false; submitEl.textContent = 'コメントを投稿'; }
-  }).catch(function(err) {
-    console.error('Write error:', err);
-    alert('コメントの投稿に失敗しました。\n' + err.message);
-    if (submitEl) { submitEl.disabled = false; submitEl.textContent = 'コメントを投稿'; }
-  });
-}
-
-// ── Delete ────────────────────────────────────────────────
-function deleteComment(sectionId, commentId) {
-  if (!db) return;
-  if (!window.confirm('このコメントを削除しますか？\nこの操作は取り消せません。')) return;
-  db.ref(DB_PATH + '/' + sectionId + '/' + commentId).remove().catch(function(err) {
-    console.error('Delete error:', err);
-    alert('削除に失敗しました。\n' + err.message);
-  });
-}
-
-// ── Render a comment using safe DOM methods ───────────────
-function appendComment(sectionId, commentId, data) {
-  const list = document.getElementById('comments-list-' + sectionId);
-  if (!list) return;
-
-  // Remove placeholder
-  const placeholder = document.getElementById('no-comments-' + sectionId);
-  if (placeholder) placeholder.remove();
-
-  // Wrapper
-  const wrapper = document.createElement('div');
-  wrapper.id = 'comment-' + commentId;
-  wrapper.className = 'comment-item';
-
-  // Header
-  const header = document.createElement('div');
-  header.className = 'comment-header';
-
-  const authorSpan = document.createElement('span');
-  authorSpan.className = 'comment-author';
-  authorSpan.textContent = data.author || '（名前なし）';
-
-  const timeSpan = document.createElement('span');
-  timeSpan.className = 'comment-time';
-  timeSpan.textContent = formatTimestamp(data.timestamp);
-
-  const delBtn = document.createElement('button');
-  delBtn.type = 'button';
-  delBtn.className = 'comment-delete';
-  delBtn.title = 'このコメントを削除';
-  delBtn.textContent = '削除';
-  // Capture sectionId and commentId in closure — no user data in handler
-  delBtn.addEventListener('click', (function(sid, cid) {
-    return function() { deleteComment(sid, cid); };
-  })(sectionId, commentId));
-
-  header.appendChild(authorSpan);
-  header.appendChild(timeSpan);
-  header.appendChild(delBtn);
-
-  // Text — split on newlines, insert <br> elements (no innerHTML with user data)
-  const textDiv = document.createElement('div');
-  textDiv.className = 'comment-text';
-  const lines = String(data.text || '').split('\n');
-  lines.forEach(function(line, i) {
-    textDiv.appendChild(document.createTextNode(line));
-    if (i < lines.length - 1) textDiv.appendChild(document.createElement('br'));
-  });
-
-  wrapper.appendChild(header);
-  wrapper.appendChild(textDiv);
-  list.appendChild(wrapper);
-
-  refreshCount(sectionId);
 }
 
 // ── Toggle ────────────────────────────────────────────────
 function toggleComments(sectionId) {
-  const body   = document.getElementById('cbody-' + sectionId);
-  const btn    = document.getElementById('toggle-btn-' + sectionId);
-  const header = body && body.previousElementSibling;
-  if (!body) return;
-  const isNowHidden = body.classList.toggle('hidden');
-  if (btn)    btn.classList.toggle('collapsed', isNowHidden);
-  if (header) header.setAttribute('aria-expanded', String(!isNowHidden));
+  var body    = document.getElementById('gbody-' + sectionId);
+  var btn     = document.getElementById('toggle-btn-' + sectionId);
+  var header  = body && body.previousElementSibling;
+  if (\!body) return;
+  var isHidden = body.classList.toggle('hidden');
+  if (btn)    btn.classList.toggle('collapsed', isHidden);
+  if (header) header.setAttribute('aria-expanded', String(\!isHidden));
 }
 
-// ── Helpers ───────────────────────────────────────────────
-function refreshPlaceholder(sectionId) {
-  const list = document.getElementById('comments-list-' + sectionId);
-  if (!list) return;
-  if (list.querySelectorAll('.comment-item').length === 0) {
-    const p = document.createElement('p');
-    p.id = 'no-comments-' + sectionId;
-    p.className = 'no-comments';
-    p.textContent = 'まだコメントはありません';
-    list.appendChild(p);
-  }
-}
-
-function refreshCount(sectionId) {
-  const list  = document.getElementById('comments-list-' + sectionId);
-  const badge = document.getElementById('comment-count-' + sectionId);
-  if (!list || !badge) return;
-  const n = list.querySelectorAll('.comment-item').length;
-  badge.textContent = n > 0 ? n + '件' : '';
-}
-
-function formatTimestamp(ts) {
-  if (!ts) return '';
-  try {
-    return new Date(ts).toLocaleString('ja-JP', {
-      year: 'numeric', month: '2-digit', day: '2-digit',
-      hour: '2-digit', minute: '2-digit'
-    });
-  } catch (_) { return ''; }
-}
-
-function flashInvalid(el) {
-  if (!el) return;
-  el.style.borderColor = 'var(--danger)';
-  el.style.boxShadow   = '0 0 0 2px rgba(192,57,43,0.15)';
-  setTimeout(function() {
-    el.style.borderColor = '';
-    el.style.boxShadow   = '';
-  }, 1800);
-}
-
-function showSetupNotice() {
-  const el = document.getElementById('setup-notice');
-  if (el) el.style.display = 'block';
-}
-
-function disableForms() {
-  SECTION_IDS.forEach(function(id) {
-    const form = document.getElementById('form-' + id);
-    if (!form) return;
-    // Replace form with static note (no innerHTML with user data used)
-    while (form.firstChild) form.removeChild(form.firstChild);
-    const note = document.createElement('p');
-    note.className = 'offline-note';
-    note.textContent = 'コメント機能はオフラインです。Firebase を設定すると有効になります。';
-    form.appendChild(note);
-  });
+// ── SVG helper (static shapes only, no user data) ────────
+function makeSvg(viewBox, innerMarkup) {
+  var svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
+  svg.setAttribute('viewBox', viewBox);
+  svg.setAttribute('fill', 'none');
+  svg.setAttribute('stroke', 'currentColor');
+  svg.setAttribute('stroke-width', '2');
+  svg.setAttribute('stroke-linecap', 'round');
+  svg.setAttribute('stroke-linejoin', 'round');
+  svg.setAttribute('aria-hidden', 'true');
+  // Safe: innerMarkup contains only static SVG shape definitions (no user data)
+  svg.innerHTML = innerMarkup;
+  return svg;
 }
 
 // ── Sticky TOC active state ───────────────────────────────
 function initTOC() {
-  const sectionIds = ['section-1', 'section-2', 'section-3'];
-  const links      = document.querySelectorAll('.toc-link');
+  var sectionIds = ['section-1', 'section-2', 'section-3'];
+  var links      = document.querySelectorAll('.toc-link');
+  if (\!('IntersectionObserver' in window)) return;
 
-  if (!('IntersectionObserver' in window)) return;
-
-  const observer = new IntersectionObserver(function(entries) {
+  var obs = new IntersectionObserver(function(entries) {
     entries.forEach(function(entry) {
-      if (!entry.isIntersecting) return;
+      if (\!entry.isIntersecting) return;
       links.forEach(function(l) { l.classList.remove('active'); });
-      const active = document.querySelector('.toc-link[href="#' + entry.target.id + '"]');
+      var active = document.querySelector('.toc-link[href="#' + entry.target.id + '"]');
       if (active) active.classList.add('active');
     });
   }, { rootMargin: '-15% 0px -70% 0px' });
 
   sectionIds.forEach(function(id) {
-    const el = document.getElementById(id);
-    if (el) observer.observe(el);
+    var el = document.getElementById(id);
+    if (el) obs.observe(el);
   });
 }
 </script>
