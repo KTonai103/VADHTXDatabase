@@ -1,0 +1,1362 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>議事録 — 移植・VADデータベース合同 Web会議 2026-04-14</title>
+
+<!-- Firebase v9 compat (CDN) -->
+<script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-database-compat.js"></script>
+
+<style>
+/* ─── Reset & Tokens ─────────────────────────────────────── */
+:root {
+  --primary:        #1a3c5e;
+  --primary-dark:   #122d46;
+  --accent:         #2874a6;
+  --accent-light:   #d6eaf8;
+  --bg:             #f4f6f9;
+  --card:           #ffffff;
+  --text:           #1a1a2e;
+  --muted:          #6b7b8d;
+  --border:         #dde1e7;
+  --border-light:   #eef0f3;
+  --decision-bg:    #fffbf0;
+  --decision-border:#e8a000;
+  --decision-text:  #7d4e00;
+  --tag-blue:       #e8f4fd;
+  --tag-blue-text:  #1a5276;
+  --comment-bg:     #f8f9fb;
+  --comment-border: #e4e8ed;
+  --danger:         #c0392b;
+  --shadow-sm:      0 1px 3px rgba(0,0,0,0.07);
+  --radius:         8px;
+  --radius-sm:      5px;
+}
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+body {
+  font-family: 'Segoe UI', -apple-system, BlinkMacSystemFont, 'Helvetica Neue',
+               'Hiragino Sans', 'Yu Gothic UI', sans-serif;
+  background: var(--bg);
+  color: var(--text);
+  line-height: 1.75;
+  font-size: 15px;
+}
+
+/* ─── Setup Notice ───────────────────────────────────────── */
+#setup-notice {
+  display: none;
+  background: #fffbea;
+  border-bottom: 2px solid #f0b429;
+  padding: 14px 32px;
+  font-size: 0.88rem;
+  color: #5c4500;
+}
+#setup-notice strong { display: block; margin-bottom: 4px; font-size: 0.92rem; }
+#setup-notice code {
+  background: rgba(0,0,0,0.07);
+  padding: 1px 5px;
+  border-radius: 3px;
+  font-family: 'Menlo', 'Consolas', monospace;
+  font-size: 0.85em;
+}
+#setup-notice a { color: #7d4e00; }
+
+/* ─── Header ─────────────────────────────────────────────── */
+.page-header {
+  background: linear-gradient(135deg, var(--primary) 0%, #1a5276 65%, var(--accent) 100%);
+  color: #fff;
+  padding: 36px 48px 30px;
+  position: relative;
+  overflow: hidden;
+}
+.page-header::after {
+  content: '';
+  position: absolute;
+  right: -60px; top: -60px;
+  width: 280px; height: 280px;
+  border-radius: 50%;
+  background: rgba(255,255,255,0.04);
+  pointer-events: none;
+}
+.org-label {
+  font-size: 0.72rem;
+  letter-spacing: 2.5px;
+  text-transform: uppercase;
+  opacity: 0.72;
+  margin-bottom: 8px;
+  font-weight: 600;
+}
+.page-header h1 {
+  font-size: 1.65rem;
+  font-weight: 700;
+  letter-spacing: 0.2px;
+  line-height: 1.3;
+  margin-bottom: 16px;
+}
+.header-meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 18px;
+  font-size: 0.86rem;
+  opacity: 0.88;
+}
+.header-meta-item {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+}
+.header-meta-item svg { flex-shrink: 0; opacity: 0.8; }
+.inst-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 18px;
+}
+.inst-chip {
+  background: rgba(255,255,255,0.15);
+  border: 1px solid rgba(255,255,255,0.25);
+  border-radius: 20px;
+  padding: 4px 14px;
+  font-size: 0.80rem;
+  font-weight: 500;
+}
+.inst-chip.guest { opacity: 0.65; }
+
+/* ─── TOC Nav ────────────────────────────────────────────── */
+.toc-strip {
+  background: #fff;
+  border-bottom: 1px solid var(--border);
+  padding: 0 48px;
+  position: sticky;
+  top: 0;
+  z-index: 100;
+  box-shadow: var(--shadow-sm);
+}
+.toc-inner {
+  display: flex;
+  gap: 0;
+  overflow-x: auto;
+  scrollbar-width: none;
+}
+.toc-inner::-webkit-scrollbar { display: none; }
+.toc-link {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  padding: 13px 18px 11px;
+  font-size: 0.82rem;
+  font-weight: 600;
+  color: var(--muted);
+  text-decoration: none;
+  border-bottom: 2px solid transparent;
+  white-space: nowrap;
+  transition: color 0.15s, border-color 0.15s;
+}
+.toc-link:hover { color: var(--accent); border-bottom-color: var(--accent-light); }
+.toc-link.active { color: var(--primary); border-bottom-color: var(--primary); }
+.toc-num {
+  background: var(--primary);
+  color: #fff;
+  width: 20px; height: 20px;
+  border-radius: 50%;
+  font-size: 0.72rem;
+  display: flex; align-items: center; justify-content: center;
+  flex-shrink: 0;
+  font-weight: 700;
+}
+
+/* ─── Layout ─────────────────────────────────────────────── */
+.page-body {
+  max-width: 900px;
+  margin: 0 auto;
+  padding: 36px 40px 80px;
+}
+
+/* ─── Agenda Sections ────────────────────────────────────── */
+.agenda-section { margin-bottom: 40px; }
+.section-header {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding-bottom: 10px;
+  border-bottom: 2px solid var(--primary);
+  margin-bottom: 20px;
+}
+.section-badge {
+  background: var(--primary);
+  color: #fff;
+  width: 34px; height: 34px;
+  border-radius: 50%;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 0.88rem;
+  font-weight: 700;
+  flex-shrink: 0;
+}
+.section-header h2 {
+  font-size: 1.12rem;
+  color: var(--primary);
+  font-weight: 700;
+  flex: 1;
+}
+
+/* ─── Sub-sections ───────────────────────────────────────── */
+.subsection {
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  margin-bottom: 18px;
+  box-shadow: var(--shadow-sm);
+  overflow: hidden;
+}
+.subsection-header {
+  padding: 16px 22px 14px;
+  border-bottom: 1px solid var(--border-light);
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+}
+.sub-num {
+  background: var(--accent-light);
+  color: var(--accent);
+  border-radius: 4px;
+  padding: 2px 8px;
+  font-size: 0.75rem;
+  font-weight: 700;
+  flex-shrink: 0;
+  margin-top: 2px;
+  letter-spacing: 0.3px;
+}
+.subsection-header h3 {
+  font-size: 1.0rem;
+  font-weight: 700;
+  color: var(--primary-dark);
+  line-height: 1.4;
+}
+.presenter-tag {
+  display: inline-block;
+  background: var(--tag-blue);
+  color: var(--tag-blue-text);
+  border-radius: 3px;
+  padding: 1px 8px;
+  font-size: 0.75rem;
+  font-weight: 600;
+  margin-left: 8px;
+  vertical-align: middle;
+}
+.subsection-body { padding: 18px 22px 20px; }
+
+/* ─── Tables ─────────────────────────────────────────────── */
+.info-table {
+  width: 100%;
+  border-collapse: collapse;
+  margin-bottom: 18px;
+  font-size: 0.88rem;
+}
+.info-table th {
+  background: #f4f6f9;
+  color: var(--muted);
+  font-weight: 600;
+  text-align: left;
+  padding: 9px 14px;
+  border: 1px solid var(--border);
+  width: 30%;
+  font-size: 0.82rem;
+  letter-spacing: 0.2px;
+}
+.info-table td {
+  padding: 9px 14px;
+  border: 1px solid var(--border);
+  color: var(--text);
+}
+.info-table tr:first-child th,
+.info-table tr:first-child td { border-top: 2px solid var(--accent-light); }
+
+/* ─── Content Blocks ─────────────────────────────────────── */
+.content-block { margin-bottom: 16px; }
+.content-block-label {
+  font-size: 0.78rem;
+  font-weight: 700;
+  letter-spacing: 1.2px;
+  text-transform: uppercase;
+  color: var(--muted);
+  margin-bottom: 8px;
+}
+.bullet-list { list-style: none; padding: 0; }
+.bullet-list li {
+  padding: 4px 0 4px 18px;
+  position: relative;
+  font-size: 0.92rem;
+  color: var(--text);
+}
+.bullet-list li::before {
+  content: '';
+  position: absolute;
+  left: 4px; top: 12px;
+  width: 6px; height: 6px;
+  border-radius: 50%;
+  background: var(--accent);
+  opacity: 0.6;
+}
+.bullet-list.indent { margin-left: 20px; }
+.bullet-list.indent li::before { background: var(--muted); opacity: 0.5; }
+
+/* ─── Decision Callout ───────────────────────────────────── */
+.decision-box {
+  background: var(--decision-bg);
+  border: 1px solid #f5c842;
+  border-left: 4px solid var(--decision-border);
+  border-radius: var(--radius-sm);
+  padding: 14px 18px;
+  margin-bottom: 16px;
+}
+.decision-box-label {
+  font-size: 0.75rem;
+  font-weight: 700;
+  letter-spacing: 1.5px;
+  text-transform: uppercase;
+  color: var(--decision-border);
+  margin-bottom: 8px;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+.decision-box ul { list-style: none; padding: 0; }
+.decision-box ul li {
+  padding: 3px 0 3px 16px;
+  position: relative;
+  font-size: 0.90rem;
+  color: var(--decision-text);
+  font-weight: 500;
+}
+.decision-box ul li::before {
+  content: '\2192';
+  position: absolute;
+  left: 0;
+  color: var(--decision-border);
+  font-weight: 700;
+}
+
+/* ─── Rule List ──────────────────────────────────────────── */
+.rule-list {
+  list-style: none;
+  padding: 0;
+  counter-reset: rule-counter;
+}
+.rule-list li {
+  counter-increment: rule-counter;
+  padding: 10px 14px 10px 48px;
+  position: relative;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  margin-bottom: 8px;
+  background: #fafbfc;
+  font-size: 0.91rem;
+}
+.rule-list li::before {
+  content: counter(rule-counter);
+  position: absolute;
+  left: 14px; top: 50%;
+  transform: translateY(-50%);
+  background: var(--primary);
+  color: #fff;
+  width: 22px; height: 22px;
+  border-radius: 50%;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 0.75rem;
+  font-weight: 700;
+  line-height: 22px;
+  text-align: center;
+}
+.rule-list li strong { color: var(--primary); }
+
+/* ─── Person Cards ───────────────────────────────────────── */
+.person-row { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 12px; }
+.person-card {
+  background: #f4f6f9;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  padding: 7px 14px;
+  font-size: 0.84rem;
+}
+.person-card .role {
+  font-size: 0.72rem;
+  color: var(--muted);
+  font-weight: 600;
+  display: block;
+  letter-spacing: 0.5px;
+}
+.person-card .name { font-weight: 600; color: var(--primary-dark); }
+
+/* ─── Comment Section ────────────────────────────────────── */
+.comment-section {
+  border-top: 1px solid var(--border-light);
+  background: var(--comment-bg);
+  padding: 18px 22px 20px;
+}
+.comment-section-header {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 14px;
+  cursor: pointer;
+  user-select: none;
+}
+.comment-section-header h4 {
+  font-size: 0.83rem;
+  font-weight: 700;
+  color: var(--muted);
+  letter-spacing: 0.8px;
+  text-transform: uppercase;
+  flex: 1;
+}
+.comment-count {
+  font-size: 0.75rem;
+  background: var(--accent-light);
+  color: var(--accent);
+  border-radius: 10px;
+  padding: 1px 9px;
+  font-weight: 700;
+}
+.comment-toggle {
+  background: none;
+  border: none;
+  cursor: pointer;
+  color: var(--muted);
+  padding: 2px;
+  display: flex;
+  align-items: center;
+  transition: transform 0.2s;
+}
+.comment-toggle.collapsed { transform: rotate(-90deg); }
+.comment-body { display: block; }
+.comment-body.hidden { display: none; }
+
+/* Comments list */
+.comments-list { margin-bottom: 14px; }
+.comment-item {
+  background: #fff;
+  border: 1px solid var(--comment-border);
+  border-radius: var(--radius-sm);
+  padding: 11px 15px;
+  margin-bottom: 8px;
+  animation: fadeIn 0.2s ease;
+}
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(-4px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+.comment-header {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 7px;
+}
+.comment-author {
+  font-weight: 700;
+  font-size: 0.85rem;
+  color: var(--primary);
+}
+.comment-time {
+  font-size: 0.75rem;
+  color: var(--muted);
+  flex: 1;
+}
+.comment-delete {
+  background: none;
+  border: 1px solid transparent;
+  color: var(--muted);
+  cursor: pointer;
+  font-size: 0.78rem;
+  padding: 2px 8px;
+  border-radius: 3px;
+  transition: all 0.15s;
+  line-height: 1.6;
+  font-family: inherit;
+}
+.comment-delete:hover {
+  background: #fde8e8;
+  border-color: #f5c6c6;
+  color: var(--danger);
+}
+.comment-text {
+  font-size: 0.89rem;
+  color: var(--text);
+  line-height: 1.7;
+  word-break: break-word;
+}
+.no-comments {
+  font-size: 0.83rem;
+  color: var(--muted);
+  text-align: center;
+  padding: 10px 0 4px;
+  font-style: italic;
+}
+
+/* Comment form */
+.comment-form { display: flex; flex-direction: column; gap: 8px; }
+.comment-form-row { display: flex; gap: 8px; }
+.comment-input-name {
+  width: 220px;
+  padding: 8px 12px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  font-size: 0.86rem;
+  font-family: inherit;
+  background: #fff;
+  color: var(--text);
+  transition: border-color 0.15s, box-shadow 0.15s;
+}
+.comment-input-name:focus {
+  outline: none;
+  border-color: var(--accent);
+  box-shadow: 0 0 0 2px rgba(40,116,166,0.12);
+}
+.comment-input-text {
+  width: 100%;
+  padding: 9px 12px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  font-size: 0.86rem;
+  font-family: inherit;
+  background: #fff;
+  color: var(--text);
+  resize: vertical;
+  min-height: 72px;
+  transition: border-color 0.15s, box-shadow 0.15s;
+}
+.comment-input-text:focus {
+  outline: none;
+  border-color: var(--accent);
+  box-shadow: 0 0 0 2px rgba(40,116,166,0.12);
+}
+.comment-submit {
+  align-self: flex-end;
+  background: var(--primary);
+  color: #fff;
+  border: none;
+  border-radius: var(--radius-sm);
+  padding: 9px 22px;
+  font-size: 0.86rem;
+  font-weight: 600;
+  cursor: pointer;
+  font-family: inherit;
+  transition: background 0.15s;
+  letter-spacing: 0.2px;
+}
+.comment-submit:hover { background: var(--accent); }
+.comment-submit:disabled { opacity: 0.5; cursor: not-allowed; }
+.offline-note {
+  font-size: 0.80rem;
+  color: var(--muted);
+  text-align: center;
+  padding: 10px 12px;
+  background: #f0f2f5;
+  border-radius: var(--radius-sm);
+  border: 1px dashed var(--border);
+}
+
+/* ─── Footer ─────────────────────────────────────────────── */
+.page-footer {
+  max-width: 900px;
+  margin: 0 auto;
+  padding: 20px 40px 48px;
+  border-top: 1px solid var(--border);
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 0.78rem;
+  color: var(--muted);
+  flex-wrap: wrap;
+  gap: 8px;
+}
+.footer-badge {
+  background: var(--primary);
+  color: #fff;
+  padding: 4px 12px;
+  border-radius: 3px;
+  font-size: 0.74rem;
+  font-weight: 600;
+  letter-spacing: 0.5px;
+}
+
+/* ─── Responsive ─────────────────────────────────────────── */
+@media (max-width: 680px) {
+  .page-header { padding: 24px 20px 20px; }
+  .page-header h1 { font-size: 1.3rem; }
+  .toc-strip { padding: 0 12px; }
+  .page-body { padding: 24px 16px 60px; }
+  .subsection-header { padding: 14px 16px 12px; }
+  .subsection-body { padding: 14px 16px 16px; }
+  .comment-section { padding: 14px 16px 16px; }
+  .comment-form-row { flex-direction: column; }
+  .comment-input-name { width: 100%; }
+  .page-footer { padding: 16px 16px 40px; flex-direction: column; align-items: flex-start; }
+  .info-table th { width: 36%; }
+}
+@media print {
+  .toc-strip, .comment-section, #setup-notice { display: none !important; }
+  .page-header { print-color-adjust: exact; -webkit-print-color-adjust: exact; }
+  .subsection { break-inside: avoid; }
+}
+</style>
+</head>
+<body>
+
+<!-- ── Setup Notice ──────────────────────────────────────── -->
+<div id="setup-notice">
+  <strong>コメント機能のセットアップが必要です</strong>
+  コメント機能を有効にするには、このファイル末尾の <code>FIREBASE_CONFIG</code> を
+  Firebase プロジェクトの設定値に置き換えてください。
+  設定方法：<a href="https://console.firebase.google.com/" target="_blank" rel="noopener">Firebase Console</a>
+  → プロジェクト設定 → Web アプリを追加 → 設定をコピー。
+  閲覧のみの場合は設定不要です。
+</div>
+
+<!-- ── Page Header ───────────────────────────────────────── -->
+<header class="page-header">
+  <p class="org-label">Transplant &amp; VAD Database Consortium — NCVC / Osaka University</p>
+  <h1>移植・VADデータベース合同 Web会議 議事録</h1>
+  <div class="header-meta">
+    <span class="header-meta-item">
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+      2026年4月14日（月）
+    </span>
+    <span class="header-meta-item">
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="2" y="3" width="20" height="14" rx="2" ry="2"/><polyline points="8 21 12 17 16 21"/><line x1="12" y1="17" x2="12" y2="21"/></svg>
+      Web会議（オンライン）
+    </span>
+    <span class="header-meta-item">
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+      NCVC ・ 大阪大学 心臓血管外科 ・ 鳥取大学（発表参加）
+    </span>
+  </div>
+  <div class="inst-chips">
+    <span class="inst-chip">大阪大学 心臓血管外科</span>
+    <span class="inst-chip">国立循環器病研究センター（NCVC）</span>
+    <span class="inst-chip guest">鳥取大学（発表参加）</span>
+  </div>
+</header>
+
+<!-- ── Sticky TOC ────────────────────────────────────────── -->
+<nav class="toc-strip" aria-label="目次">
+  <div class="toc-inner">
+    <a href="#section-1" class="toc-link">
+      <span class="toc-num" aria-hidden="true">1</span>ISHLT 2026 発表報告
+    </a>
+    <a href="#section-2" class="toc-link">
+      <span class="toc-num" aria-hidden="true">2</span>予定研究の概要説明
+    </a>
+    <a href="#section-3" class="toc-link">
+      <span class="toc-num" aria-hidden="true">3</span>今後の施設拡大について
+    </a>
+  </div>
+</nav>
+
+<!-- ── Main Content ──────────────────────────────────────── -->
+<main class="page-body">
+
+  <!-- ═══════════════════════════════════════════
+       AGENDA 1 — ISHLT 2026 発表報告
+  ═══════════════════════════════════════════ -->
+  <section class="agenda-section" id="section-1">
+    <div class="section-header">
+      <div class="section-badge" aria-hidden="true">1</div>
+      <h2>Agenda 1 — ISHLT 2026 発表報告</h2>
+    </div>
+
+    <!-- 1-1 -->
+    <article class="subsection" id="sub-1-1">
+      <div class="subsection-header">
+        <span class="sub-num">1-1</span>
+        <h3>藤内 康平（大阪大学）— ISHLT 2026 Oral 発表報告
+          <span class="presenter-tag">大阪大学</span>
+        </h3>
+      </div>
+      <div class="subsection-body">
+        <table class="info-table">
+          <tbody>
+            <tr><th>タイトル</th><td>Small BSA Predicts Late Right Heart Failure After HeartMate 3 Implantation</td></tr>
+            <tr><th>セッション</th><td>ORAL SESS 36</td></tr>
+            <tr><th>日時</th><td>Sat Apr 25, 8:13–8:21 AM ET（8分発表 + 4分 Q&amp;A）</td></tr>
+            <tr><th>抄録番号</th><td>26-RA-5289-ISHLT</td></tr>
+          </tbody>
+        </table>
+        <div class="content-block">
+          <p class="content-block-label">主な議論</p>
+          <ul class="bullet-list">
+            <li>特に<strong>呼吸機能の低下</strong>に関する議論が注目を集めた（小体格患者における肺機能低下との関連）</li>
+          </ul>
+        </div>
+        <div class="decision-box">
+          <p class="decision-box-label">
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polyline points="20 6 9 17 4 12"/></svg>
+            決定事項
+          </p>
+          <ul>
+            <li>論文ドラフトはすでに完成。ISHLT 発表後、<strong>JHLT（J Heart Lung Transplant）へ投稿予定</strong></li>
+          </ul>
+        </div>
+      </div>
+      <div class="comment-section" id="cs-1-1"><!-- injected by JS --></div>
+    </article>
+
+    <!-- 1-2 -->
+    <article class="subsection" id="sub-1-2">
+      <div class="subsection-header">
+        <span class="sub-num">1-2</span>
+        <h3>柳野 佑輔（NCVC）— ISHLT 2026 Poster 発表報告
+          <span class="presenter-tag">NCVC</span>
+        </h3>
+      </div>
+      <div class="subsection-body">
+        <table class="info-table">
+          <tbody>
+            <tr><th>セッション</th><td>POSTER-1-B: Temporary MCS, Cardiogenic Shock, and ECMO</td></tr>
+            <tr><th>日時</th><td>Wed Apr 22, 6:00–7:00 PM ET</td></tr>
+            <tr><th>レジストリ</th><td>J-PVAD レジストリを用いた研究</td></tr>
+          </tbody>
+        </table>
+        <div class="content-block">
+          <p class="content-block-label">備考</p>
+          <ul class="bullet-list">
+            <li>J-PVAD レジストリを用いた研究であるため、本会議での詳細報告は行わなかった</li>
+          </ul>
+        </div>
+      </div>
+      <div class="comment-section" id="cs-1-2"><!-- injected by JS --></div>
+    </article>
+  </section>
+
+  <!-- ═══════════════════════════════════════════
+       AGENDA 2 — 予定研究の概要説明
+  ═══════════════════════════════════════════ -->
+  <section class="agenda-section" id="section-2">
+    <div class="section-header">
+      <div class="section-badge" aria-hidden="true">2</div>
+      <h2>Agenda 2 — 予定研究の概要説明</h2>
+    </div>
+
+    <!-- 2-1 -->
+    <article class="subsection" id="sub-2-1">
+      <div class="subsection-header">
+        <span class="sub-num">2-1</span>
+        <h3>仁井 陸冬（鳥取大学）— 研究計画概要
+          <span class="presenter-tag">鳥取大学</span>
+        </h3>
+      </div>
+      <div class="subsection-body">
+        <div class="content-block">
+          <p class="content-block-label">研究テーマ</p>
+          <ul class="bullet-list">
+            <li>Prognostic analysis focusing on <strong>catecholamine index in recipient hearts</strong></li>
+          </ul>
+        </div>
+        <div class="content-block">
+          <p class="content-block-label">現状</p>
+          <ul class="bullet-list">
+            <li>研究はすでに開始されており、<strong>矢嶋先生が指導</strong>として解析・論文作成が進行中</li>
+          </ul>
+        </div>
+        <div class="decision-box">
+          <p class="decision-box-label">
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polyline points="20 6 9 17 4 12"/></svg>
+            決定事項
+          </p>
+          <ul>
+            <li><strong>論文化を優先</strong>して進める</li>
+            <li>学会発表予定：心臓移植学会・移植学会</li>
+          </ul>
+        </div>
+      </div>
+      <div class="comment-section" id="cs-2-1"><!-- injected by JS --></div>
+    </article>
+  </section>
+
+  <!-- ═══════════════════════════════════════════
+       AGENDA 3 — 今後の施設拡大について
+  ═══════════════════════════════════════════ -->
+  <section class="agenda-section" id="section-3">
+    <div class="section-header">
+      <div class="section-badge" aria-hidden="true">3</div>
+      <h2>Agenda 3 — 今後の施設拡大について</h2>
+    </div>
+
+    <!-- 3-1 -->
+    <article class="subsection" id="sub-3-1">
+      <div class="subsection-header">
+        <span class="sub-num">3-1</span>
+        <h3>施設拡大の方向性</h3>
+      </div>
+      <div class="subsection-body">
+        <div class="decision-box">
+          <p class="decision-box-label">
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polyline points="20 6 9 17 4 12"/></svg>
+            決定事項
+          </p>
+          <ul>
+            <li><strong>NCVC + 大阪大学の2施設体制を継続する</strong></li>
+          </ul>
+        </div>
+        <div class="content-block">
+          <p class="content-block-label">埼玉医科大学国際医療センターについて</p>
+          <ul class="bullet-list">
+            <li>現時点での施設拡大は<strong>見送り</strong></li>
+          </ul>
+          <ul class="bullet-list indent">
+            <li>症例数が限定的</li>
+            <li>倫理委員会対応・データ統合の準備が未整備</li>
+          </ul>
+          <ul class="bullet-list" style="margin-top:10px;">
+            <li>将来的な考慮：渡邉先生が同センターに赴任し体制が整った段階で、拡大を検討する可能性あり</li>
+          </ul>
+        </div>
+        <div class="content-block">
+          <p class="content-block-label">将来的な視野</p>
+          <ul class="bullet-list">
+            <li>賛同施設が出てくる場合は施設拡大・データベース拡充も視野に入れる</li>
+          </ul>
+        </div>
+      </div>
+      <div class="comment-section" id="cs-3-1"><!-- injected by JS --></div>
+    </article>
+
+    <!-- 3-2 -->
+    <article class="subsection" id="sub-3-2">
+      <div class="subsection-header">
+        <span class="sub-num">3-2</span>
+        <h3>データベース運用・共有体制の確認</h3>
+      </div>
+      <div class="subsection-body">
+        <div class="content-block">
+          <p class="content-block-label">担当者</p>
+          <div class="person-row">
+            <div class="person-card">
+              <span class="role">NCVC</span>
+              <span class="name">北畑さん・鈴木先生</span>
+            </div>
+            <div class="person-card">
+              <span class="role">大阪大学</span>
+              <span class="name">田口・藤内・柳野</span>
+            </div>
+          </div>
+        </div>
+        <div class="content-block">
+          <p class="content-block-label">検討課題</p>
+          <ul class="bullet-list">
+            <li>人員増加・業務分担の工夫を継続的に検討</li>
+            <li>現状の Excel 運用を継続するか、セキュリティを考慮した<strong>データベース構築</strong>に移行するかを継続的に議論</li>
+          </ul>
+        </div>
+      </div>
+      <div class="comment-section" id="cs-3-2"><!-- injected by JS --></div>
+    </article>
+
+    <!-- 3-3 -->
+    <article class="subsection" id="sub-3-3">
+      <div class="subsection-header">
+        <span class="sub-num">3-3</span>
+        <h3>多施設研究のルール策定
+          <span class="presenter-tag">吉岡先生より提示・全員合意</span>
+        </h3>
+      </div>
+      <div class="subsection-body">
+        <p style="font-size:0.90rem;color:var(--muted);margin-bottom:14px;">
+          以下のルールが全員の合意のもと決定された。
+        </p>
+        <ol class="rule-list">
+          <li>
+            <strong>学会発表前：</strong>
+            研究に参加しているすべての研究者にメールで事前通達（発表内容を共有）
+          </li>
+          <li>
+            <strong>論文投稿前：</strong>
+            論文ドラフトをすべての研究者に添付し、<strong>全員の承認を得た上でサブミット</strong>する
+          </li>
+        </ol>
+      </div>
+      <div class="comment-section" id="cs-3-3"><!-- injected by JS --></div>
+    </article>
+
+    <!-- 3-4 -->
+    <article class="subsection" id="sub-3-4">
+      <div class="subsection-header">
+        <span class="sub-num">3-4</span>
+        <h3>その他の研究計画
+          <span class="presenter-tag">藤内</span>
+        </h3>
+      </div>
+      <div class="subsection-body">
+        <div class="content-block">
+          <p class="content-block-label">胸部外科学会への研究計画</p>
+          <ul class="bullet-list">
+            <li><strong>テーマ：</strong>LVAD 手術時の大動脈弁閉鎖術の比較</li>
+          </ul>
+          <ul class="bullet-list indent">
+            <li>Park's stitch（国循）</li>
+            <li>Patch closure（阪大）</li>
+          </ul>
+          <ul class="bullet-list" style="margin-top:10px;">
+            <li><strong>検討内容：</strong>両術式における早期・長期アウトカム、durability、および背景因子の比較；両術式ともに大動脈弁閉鎖介入として耐久性があり feasible であることの確認</li>
+            <li>今後、胸部外科学会での発表および論文化を検討中</li>
+          </ul>
+        </div>
+      </div>
+      <div class="comment-section" id="cs-3-4"><!-- injected by JS --></div>
+    </article>
+
+    <!-- 3-5 -->
+    <article class="subsection" id="sub-3-5">
+      <div class="subsection-header">
+        <span class="sub-num">3-5</span>
+        <h3>今後のスケジュール・次回会議</h3>
+      </div>
+      <div class="subsection-body">
+        <div class="decision-box">
+          <p class="decision-box-label">
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polyline points="20 6 9 17 4 12"/></svg>
+            決定事項
+          </p>
+          <ul>
+            <li>以下の学会の前に<strong>合同会議を定例開催</strong>することで合意</li>
+          </ul>
+        </div>
+        <div class="content-block">
+          <p class="content-block-label">定例会議の開催タイミング</p>
+          <ul class="bullet-list">
+            <li>心臓移植学会（前）</li>
+            <li>移植学会（前）</li>
+            <li>人工心臓・人工臓器学会（前）</li>
+          </ul>
+        </div>
+        <div class="content-block">
+          <p class="content-block-label">目的</p>
+          <ul class="bullet-list">
+            <li>各研究者が進行中の研究を持ち寄り、共有・承認を行う定例会議として位置づける</li>
+          </ul>
+        </div>
+      </div>
+      <div class="comment-section" id="cs-3-5"><!-- injected by JS --></div>
+    </article>
+
+  </section>
+
+</main>
+
+<!-- ── Footer ─────────────────────────────────────────────── -->
+<footer class="page-footer">
+  <span>記録：音声入力より作成（2026-04-14）</span>
+  <span class="footer-badge">CONFIDENTIAL — 関係者限定</span>
+  <span>Transplant &amp; VAD Database Consortium</span>
+</footer>
+
+
+<!-- ════════════════════════════════════════════════════════
+  FIREBASE CONFIGURATION
+  ─────────────────────────────────────────────────────────
+  GitHub Pages へデプロイ後にコメント機能を有効にするには、
+  下記 FIREBASE_CONFIG をお使いのプロジェクトの設定値に置き換えてください。
+
+  設定手順:
+    1. https://console.firebase.google.com/ にアクセス
+    2. 新規プロジェクトを作成（例: "vad-meeting-minutes"）
+    3. Realtime Database を有効化（テストモードで開始）
+    4. プロジェクト設定 → Web アプリを追加
+    5. 表示された設定オブジェクトを下記にコピー
+
+  Realtime Database セキュリティルール（Firebase Console で設定）:
+    {
+      "rules": {
+        "vad-meeting-20260414": {
+          ".read": true,
+          ".write": true
+        }
+      }
+    }
+════════════════════════════════════════════════════════ -->
+<script>
+'use strict';
+
+// ── Firebase Configuration ──────────────────────────────
+// Replace all "YOUR_*" values with your actual Firebase project config.
+const FIREBASE_CONFIG = {
+  apiKey:            'YOUR_API_KEY',
+  authDomain:        'YOUR_PROJECT_ID.firebaseapp.com',
+  databaseURL:       'https://YOUR_PROJECT_ID-default-rtdb.firebaseio.com',
+  projectId:         'YOUR_PROJECT_ID',
+  storageBucket:     'YOUR_PROJECT_ID.appspot.com',
+  messagingSenderId: 'YOUR_SENDER_ID',
+  appId:             'YOUR_APP_ID'
+};
+
+// ── Constants ───────────────────────────────────────────
+const SECTION_IDS = ['1-1', '1-2', '2-1', '3-1', '3-2', '3-3', '3-4', '3-5'];
+const DB_PATH     = 'vad-meeting-20260414/comments';
+const IS_CONFIGURED = !FIREBASE_CONFIG.apiKey.includes('YOUR_');
+
+let db = null;
+
+// ── Bootstrap ────────────────────────────────────────────
+(function init() {
+  // Build comment UI for every section
+  SECTION_IDS.forEach(id => buildCommentUI(id));
+
+  // Restore saved author name
+  try {
+    const saved = localStorage.getItem('vad-comment-author');
+    if (saved) {
+      SECTION_IDS.forEach(id => {
+        const el = document.getElementById('author-' + id);
+        if (el && !el.value) el.value = saved;
+      });
+    }
+  } catch (_) { /* localStorage not available */ }
+
+  // Connect Firebase or show offline notice
+  if (IS_CONFIGURED) {
+    try {
+      firebase.initializeApp(FIREBASE_CONFIG);
+      db = firebase.database();
+      SECTION_IDS.forEach(id => subscribeSection(id));
+    } catch (err) {
+      console.error('Firebase init failed:', err);
+      showSetupNotice();
+      disableForms();
+    }
+  } else {
+    showSetupNotice();
+    disableForms();
+  }
+
+  // Sticky TOC active state
+  initTOC();
+})();
+
+// ── Build Comment UI ────────────────────────────────────
+function buildCommentUI(sectionId) {
+  const container = document.getElementById('cs-' + sectionId);
+  if (!container) return;
+
+  // -- Header row
+  const header = document.createElement('div');
+  header.className = 'comment-section-header';
+  header.setAttribute('role', 'button');
+  header.setAttribute('tabindex', '0');
+  header.setAttribute('aria-expanded', 'true');
+  header.setAttribute('aria-controls', 'cbody-' + sectionId);
+  header.addEventListener('click', () => toggleComments(sectionId));
+  header.addEventListener('keydown', (e) => {
+    if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); toggleComments(sectionId); }
+  });
+
+  // Icon
+  const iconSvg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
+  iconSvg.setAttribute('width', '15'); iconSvg.setAttribute('height', '15');
+  iconSvg.setAttribute('viewBox', '0 0 24 24'); iconSvg.setAttribute('fill', 'none');
+  iconSvg.setAttribute('stroke', 'currentColor'); iconSvg.setAttribute('stroke-width', '2');
+  iconSvg.setAttribute('stroke-linecap', 'round'); iconSvg.setAttribute('stroke-linejoin', 'round');
+  iconSvg.setAttribute('aria-hidden', 'true');
+  const iconPath = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+  iconPath.setAttribute('d', 'M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z');
+  iconSvg.appendChild(iconPath);
+
+  const title = document.createElement('h4');
+  title.textContent = 'コメント・注記';
+
+  const countBadge = document.createElement('span');
+  countBadge.className = 'comment-count';
+  countBadge.id = 'comment-count-' + sectionId;
+
+  const toggleBtn = document.createElement('button');
+  toggleBtn.className = 'comment-toggle';
+  toggleBtn.id = 'toggle-btn-' + sectionId;
+  toggleBtn.setAttribute('aria-label', 'コメントを開閉');
+  toggleBtn.setAttribute('tabindex', '-1');
+  const chevronSvg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
+  chevronSvg.setAttribute('width', '14'); chevronSvg.setAttribute('height', '14');
+  chevronSvg.setAttribute('viewBox', '0 0 24 24'); chevronSvg.setAttribute('fill', 'none');
+  chevronSvg.setAttribute('stroke', 'currentColor'); chevronSvg.setAttribute('stroke-width', '2.5');
+  chevronSvg.setAttribute('stroke-linecap', 'round'); chevronSvg.setAttribute('stroke-linejoin', 'round');
+  chevronSvg.setAttribute('aria-hidden', 'true');
+  const chevronPoly = document.createElementNS('http://www.w3.org/2000/svg', 'polyline');
+  chevronPoly.setAttribute('points', '6 9 12 15 18 9');
+  chevronSvg.appendChild(chevronPoly);
+  toggleBtn.appendChild(chevronSvg);
+
+  header.appendChild(iconSvg);
+  header.appendChild(title);
+  header.appendChild(countBadge);
+  header.appendChild(toggleBtn);
+
+  // -- Collapsible body
+  const body = document.createElement('div');
+  body.className = 'comment-body';
+  body.id = 'cbody-' + sectionId;
+
+  // Comments list
+  const list = document.createElement('div');
+  list.className = 'comments-list';
+  list.id = 'comments-list-' + sectionId;
+
+  const placeholder = document.createElement('p');
+  placeholder.className = 'no-comments';
+  placeholder.id = 'no-comments-' + sectionId;
+  placeholder.textContent = 'まだコメントはありません';
+  list.appendChild(placeholder);
+
+  // Form
+  const form = document.createElement('div');
+  form.className = 'comment-form';
+  form.id = 'form-' + sectionId;
+
+  const row = document.createElement('div');
+  row.className = 'comment-form-row';
+
+  const authorInput = document.createElement('input');
+  authorInput.type = 'text';
+  authorInput.className = 'comment-input-name';
+  authorInput.id = 'author-' + sectionId;
+  authorInput.placeholder = 'お名前（例：藤内 康平）';
+  authorInput.autocomplete = 'name';
+  row.appendChild(authorInput);
+
+  const textInput = document.createElement('textarea');
+  textInput.className = 'comment-input-text';
+  textInput.id = 'text-' + sectionId;
+  textInput.placeholder = 'このセクションに関するコメントや補足事項を記入してください…';
+  textInput.rows = 3;
+
+  const submitBtn = document.createElement('button');
+  submitBtn.type = 'button';
+  submitBtn.className = 'comment-submit';
+  submitBtn.id = 'submit-' + sectionId;
+  submitBtn.textContent = 'コメントを投稿';
+  submitBtn.addEventListener('click', () => submitComment(sectionId));
+
+  // Ctrl/Cmd+Enter shortcut
+  textInput.addEventListener('keydown', (e) => {
+    if (e.key === 'Enter' && (e.ctrlKey || e.metaKey)) { e.preventDefault(); submitComment(sectionId); }
+  });
+
+  form.appendChild(row);
+  form.appendChild(textInput);
+  form.appendChild(submitBtn);
+
+  body.appendChild(list);
+  body.appendChild(form);
+
+  container.appendChild(header);
+  container.appendChild(body);
+}
+
+// ── Firebase subscription ────────────────────────────────
+function subscribeSection(sectionId) {
+  const ref = db.ref(DB_PATH + '/' + sectionId);
+
+  ref.on('child_added', function(snapshot) {
+    const data = snapshot.val();
+    if (data) appendComment(sectionId, snapshot.key, data);
+  });
+
+  ref.on('child_removed', function(snapshot) {
+    const el = document.getElementById('comment-' + snapshot.key);
+    if (el) el.remove();
+    refreshPlaceholder(sectionId);
+    refreshCount(sectionId);
+  });
+}
+
+// ── Submit ────────────────────────────────────────────────
+function submitComment(sectionId) {
+  if (!db) return;
+
+  const authorEl = document.getElementById('author-' + sectionId);
+  const textEl   = document.getElementById('text-'   + sectionId);
+  const submitEl = document.getElementById('submit-' + sectionId);
+
+  const author = authorEl ? authorEl.value.trim() : '';
+  const text   = textEl   ? textEl.value.trim()   : '';
+
+  if (!author) { flashInvalid(authorEl); authorEl && authorEl.focus(); return; }
+  if (!text)   { flashInvalid(textEl);   textEl   && textEl.focus();   return; }
+
+  try { localStorage.setItem('vad-comment-author', author); } catch (_) {}
+
+  if (submitEl) { submitEl.disabled = true; submitEl.textContent = '投稿中…'; }
+
+  db.ref(DB_PATH + '/' + sectionId).push({
+    author:    author,
+    text:      text,
+    timestamp: firebase.database.ServerValue.TIMESTAMP
+  }).then(function() {
+    if (textEl)   textEl.value = '';
+    if (submitEl) { submitEl.disabled = false; submitEl.textContent = 'コメントを投稿'; }
+  }).catch(function(err) {
+    console.error('Write error:', err);
+    alert('コメントの投稿に失敗しました。\n' + err.message);
+    if (submitEl) { submitEl.disabled = false; submitEl.textContent = 'コメントを投稿'; }
+  });
+}
+
+// ── Delete ────────────────────────────────────────────────
+function deleteComment(sectionId, commentId) {
+  if (!db) return;
+  if (!window.confirm('このコメントを削除しますか？\nこの操作は取り消せません。')) return;
+  db.ref(DB_PATH + '/' + sectionId + '/' + commentId).remove().catch(function(err) {
+    console.error('Delete error:', err);
+    alert('削除に失敗しました。\n' + err.message);
+  });
+}
+
+// ── Render a comment using safe DOM methods ───────────────
+function appendComment(sectionId, commentId, data) {
+  const list = document.getElementById('comments-list-' + sectionId);
+  if (!list) return;
+
+  // Remove placeholder
+  const placeholder = document.getElementById('no-comments-' + sectionId);
+  if (placeholder) placeholder.remove();
+
+  // Wrapper
+  const wrapper = document.createElement('div');
+  wrapper.id = 'comment-' + commentId;
+  wrapper.className = 'comment-item';
+
+  // Header
+  const header = document.createElement('div');
+  header.className = 'comment-header';
+
+  const authorSpan = document.createElement('span');
+  authorSpan.className = 'comment-author';
+  authorSpan.textContent = data.author || '（名前なし）';
+
+  const timeSpan = document.createElement('span');
+  timeSpan.className = 'comment-time';
+  timeSpan.textContent = formatTimestamp(data.timestamp);
+
+  const delBtn = document.createElement('button');
+  delBtn.type = 'button';
+  delBtn.className = 'comment-delete';
+  delBtn.title = 'このコメントを削除';
+  delBtn.textContent = '削除';
+  // Capture sectionId and commentId in closure — no user data in handler
+  delBtn.addEventListener('click', (function(sid, cid) {
+    return function() { deleteComment(sid, cid); };
+  })(sectionId, commentId));
+
+  header.appendChild(authorSpan);
+  header.appendChild(timeSpan);
+  header.appendChild(delBtn);
+
+  // Text — split on newlines, insert <br> elements (no innerHTML with user data)
+  const textDiv = document.createElement('div');
+  textDiv.className = 'comment-text';
+  const lines = String(data.text || '').split('\n');
+  lines.forEach(function(line, i) {
+    textDiv.appendChild(document.createTextNode(line));
+    if (i < lines.length - 1) textDiv.appendChild(document.createElement('br'));
+  });
+
+  wrapper.appendChild(header);
+  wrapper.appendChild(textDiv);
+  list.appendChild(wrapper);
+
+  refreshCount(sectionId);
+}
+
+// ── Toggle ────────────────────────────────────────────────
+function toggleComments(sectionId) {
+  const body   = document.getElementById('cbody-' + sectionId);
+  const btn    = document.getElementById('toggle-btn-' + sectionId);
+  const header = body && body.previousElementSibling;
+  if (!body) return;
+  const isNowHidden = body.classList.toggle('hidden');
+  if (btn)    btn.classList.toggle('collapsed', isNowHidden);
+  if (header) header.setAttribute('aria-expanded', String(!isNowHidden));
+}
+
+// ── Helpers ───────────────────────────────────────────────
+function refreshPlaceholder(sectionId) {
+  const list = document.getElementById('comments-list-' + sectionId);
+  if (!list) return;
+  if (list.querySelectorAll('.comment-item').length === 0) {
+    const p = document.createElement('p');
+    p.id = 'no-comments-' + sectionId;
+    p.className = 'no-comments';
+    p.textContent = 'まだコメントはありません';
+    list.appendChild(p);
+  }
+}
+
+function refreshCount(sectionId) {
+  const list  = document.getElementById('comments-list-' + sectionId);
+  const badge = document.getElementById('comment-count-' + sectionId);
+  if (!list || !badge) return;
+  const n = list.querySelectorAll('.comment-item').length;
+  badge.textContent = n > 0 ? n + '件' : '';
+}
+
+function formatTimestamp(ts) {
+  if (!ts) return '';
+  try {
+    return new Date(ts).toLocaleString('ja-JP', {
+      year: 'numeric', month: '2-digit', day: '2-digit',
+      hour: '2-digit', minute: '2-digit'
+    });
+  } catch (_) { return ''; }
+}
+
+function flashInvalid(el) {
+  if (!el) return;
+  el.style.borderColor = 'var(--danger)';
+  el.style.boxShadow   = '0 0 0 2px rgba(192,57,43,0.15)';
+  setTimeout(function() {
+    el.style.borderColor = '';
+    el.style.boxShadow   = '';
+  }, 1800);
+}
+
+function showSetupNotice() {
+  const el = document.getElementById('setup-notice');
+  if (el) el.style.display = 'block';
+}
+
+function disableForms() {
+  SECTION_IDS.forEach(function(id) {
+    const form = document.getElementById('form-' + id);
+    if (!form) return;
+    // Replace form with static note (no innerHTML with user data used)
+    while (form.firstChild) form.removeChild(form.firstChild);
+    const note = document.createElement('p');
+    note.className = 'offline-note';
+    note.textContent = 'コメント機能はオフラインです。Firebase を設定すると有効になります。';
+    form.appendChild(note);
+  });
+}
+
+// ── Sticky TOC active state ───────────────────────────────
+function initTOC() {
+  const sectionIds = ['section-1', 'section-2', 'section-3'];
+  const links      = document.querySelectorAll('.toc-link');
+
+  if (!('IntersectionObserver' in window)) return;
+
+  const observer = new IntersectionObserver(function(entries) {
+    entries.forEach(function(entry) {
+      if (!entry.isIntersecting) return;
+      links.forEach(function(l) { l.classList.remove('active'); });
+      const active = document.querySelector('.toc-link[href="#' + entry.target.id + '"]');
+      if (active) active.classList.add('active');
+    });
+  }, { rootMargin: '-15% 0px -70% 0px' });
+
+  sectionIds.forEach(function(id) {
+    const el = document.getElementById(id);
+    if (el) observer.observe(el);
+  });
+}
+</script>
+
+</body>
+</html>
