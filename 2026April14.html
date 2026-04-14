@@ -351,42 +351,7 @@ body {
 }
 .person-card .name { font-weight: 600; color: var(--primary-dark); }
 
-/* ─── Conference Schedule Section ──────────────────────── */
-.conf-card {
-  background: var(--card);
-  border: 1px solid var(--border);
-  border-radius: var(--radius);
-  margin-bottom: 16px;
-  box-shadow: var(--shadow-sm);
-  overflow: hidden;
-}
-.conf-card-header {
-  background: linear-gradient(90deg, var(--primary), var(--accent));
-  color: #fff;
-  padding: 12px 22px;
-  font-size: 0.95rem;
-  font-weight: 700;
-}
-.conf-card-body { padding: 16px 22px; }
-.conf-card-body .info-table { margin-bottom: 0; }
-.conf-year-label {
-  font-size: 0.80rem;
-  font-weight: 700;
-  color: var(--accent);
-  letter-spacing: 1px;
-  margin: 18px 0 10px;
-  padding-bottom: 4px;
-  border-bottom: 1px solid var(--border-light);
-}
-.conf-year-label:first-child { margin-top: 0; }
-.conf-tbd {
-  font-size: 0.88rem;
-  color: var(--muted);
-  padding: 8px 0;
-  font-style: italic;
-}
-
-/* Calendar summary table */
+/* ─── Calendar Summary Table ───────────────────────────── */
 .calendar-table {
   width: 100%;
   border-collapse: collapse;
@@ -406,14 +371,6 @@ body {
   border-bottom: 1px solid var(--border);
 }
 .calendar-table tr:nth-child(even) td { background: #fafbfc; }
-.calendar-table .year-divider td {
-  background: var(--accent-light);
-  font-weight: 700;
-  color: var(--primary);
-  padding: 7px 14px;
-  font-size: 0.82rem;
-  letter-spacing: 0.5px;
-}
 
 .page-footer {
   max-width: 900px;
@@ -752,85 +709,14 @@ body {
   <section class="agenda-section" id="section-ref">
     <div class="section-header">
       <div class="section-badge" aria-hidden="true" style="font-size:0.95rem;">&#9733;</div>
-      <h2>参考：関連学会スケジュール（2026〜2027年）</h2>
+      <h2>参考：関連学会スケジュール（2026年）</h2>
     </div>
 
-    <!-- 心臓移植学会 -->
-    <div class="conf-card">
-      <div class="conf-card-header">日本心臓移植学会（JSHT）</div>
-      <div class="conf-card-body">
-        <p class="conf-year-label">2026年</p>
-        <table class="info-table">
-          <tbody>
-            <tr><th>大会名</th><td>第45回 日本心臓移植学会学術集会</td></tr>
-            <tr><th>会期</th><td>2026年6月20日（土）〜 21日（日）</td></tr>
-            <tr><th>会場</th><td>JA共済ビル カンファレンスホール（東京都千代田区平河町）</td></tr>
-            <tr><th>会長</th><td>鈴木 孝明（埼玉医科大学国際医療センター）</td></tr>
-            <tr><th>テーマ</th><td>「ココロをツナグ — Linking Heart to Life, Uniting Spirits through Transplantation」</td></tr>
-          </tbody>
-        </table>
-        <p class="conf-year-label">2027年</p>
-        <p class="conf-tbd">第46回 日本心臓移植学会学術集会 — 日程・会場等の詳細は未公表（例年6〜7月頃の開催）</p>
-      </div>
-    </div>
-
-    <!-- 移植学会 -->
-    <div class="conf-card">
-      <div class="conf-card-header">日本移植学会（JST）</div>
-      <div class="conf-card-body">
-        <p class="conf-year-label">2026年</p>
-        <table class="info-table">
-          <tbody>
-            <tr><th>大会名</th><td>第62回 日本移植学会総会</td></tr>
-            <tr><th>会期</th><td>2026年9月10日（木）〜 12日（土）</td></tr>
-            <tr><th>会場</th><td>京王プラザホテル（東京都新宿区西新宿）</td></tr>
-            <tr><th>総会長</th><td>河地 茂行（東京医科大学八王子医療センター 消化器外科・移植外科）</td></tr>
-            <tr><th>テーマ</th><td>「医療の醍醐味を伝える — The Heart of Transplantation Medicine」</td></tr>
-          </tbody>
-        </table>
-        <p class="conf-year-label">2027年</p>
-        <table class="info-table">
-          <tbody>
-            <tr><th>大会名</th><td>第63回 日本移植学会総会</td></tr>
-            <tr><th>会期</th><td>2027年10月6日（水）〜 8日（金）</td></tr>
-            <tr><th>会場</th><td>函館アリーナ・函館市民会館（北海道函館市）</td></tr>
-            <tr><th>総会長</th><td>岡田 克典（東北大学加齢医学研究所 呼吸器外科学分野）</td></tr>
-          </tbody>
-        </table>
-      </div>
-    </div>
-
-    <!-- 人工臓器学会 -->
-    <div class="conf-card">
-      <div class="conf-card-header">日本人工臓器学会（JSAO）</div>
-      <div class="conf-card-body">
-        <p class="conf-year-label">2026年</p>
-        <table class="info-table">
-          <tbody>
-            <tr><th>大会名</th><td>第64回 日本人工臓器学会大会</td></tr>
-            <tr><th>会期</th><td>2026年11月3日（火・祝）〜 5日（木）</td></tr>
-            <tr><th>会場</th><td>キオクシア アイーナ ＋ マリオス（岩手県盛岡市）</td></tr>
-            <tr><th>大会長</th><td>阿部 貴弥（岩手医科大学 泌尿器科学講座）</td></tr>
-            <tr><th>テーマ</th><td>「サイエンスとアート 〜 次世代への継承と挑戦 〜」</td></tr>
-          </tbody>
-        </table>
-        <p class="conf-year-label">2027年</p>
-        <table class="info-table">
-          <tbody>
-            <tr><th>大会名</th><td>第65回 日本人工臓器学会大会</td></tr>
-            <tr><th>会期</th><td>2027年11月11日（木）〜 13日（土）</td></tr>
-            <tr><th>会場</th><td>アクロス福岡（福岡市）</td></tr>
-            <tr><th>大会長</th><td>塩瀬 明（九州大学大学院医学研究院 循環器外科）</td></tr>
-          </tbody>
-        </table>
-      </div>
-    </div>
-
-    <!-- Calendar summary -->
+    <!-- Calendar summary 2026 -->
     <article class="subsection">
       <div class="subsection-header">
         <span class="sub-num" style="background:var(--primary);color:#fff;">一覧</span>
-        <h3>年間カレンダー（2026〜2027年）</h3>
+        <h3>2026年 学会カレンダー</h3>
       </div>
       <div class="subsection-body" style="padding:0;">
         <table class="calendar-table">
@@ -838,13 +724,9 @@ body {
             <tr><th>日程</th><th>学会名</th><th>開催地</th></tr>
           </thead>
           <tbody>
-            <tr class="year-divider"><td colspan="3">2026年</td></tr>
             <tr><td>6月20〜21日</td><td>第45回 日本心臓移植学会学術集会</td><td>東京（千代田区）</td></tr>
             <tr><td>9月10〜12日</td><td>第62回 日本移植学会総会</td><td>東京（新宿区）</td></tr>
             <tr><td>11月3〜5日</td><td>第64回 日本人工臓器学会大会</td><td>岩手県盛岡市</td></tr>
-            <tr class="year-divider"><td colspan="3">2027年</td></tr>
-            <tr><td>10月6〜8日</td><td>第63回 日本移植学会総会</td><td>北海道函館市</td></tr>
-            <tr><td>11月11〜13日</td><td>第65回 日本人工臓器学会大会</td><td>福岡市</td></tr>
           </tbody>
         </table>
       </div>
