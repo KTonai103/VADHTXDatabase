@@ -4,9 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>議事録 — 移植・VADデータベース合同 Web会議 2026-04-14</title>
-
 <style>
-/* ─── Reset & Tokens ─────────────────────────────────────── */
 :root {
   --primary:        #1a3c5e;
   --primary-dark:   #122d46;
@@ -23,9 +21,6 @@
   --decision-text:  #7d4e00;
   --tag-blue:       #e8f4fd;
   --tag-blue-text:  #1a5276;
-  --comment-bg:     #f8f9fb;
-  --comment-border: #e4e8ed;
-  --danger:         #c0392b;
   --shadow-sm:      0 1px 3px rgba(0,0,0,0.07);
   --radius:         8px;
   --radius-sm:      5px;
@@ -40,19 +35,6 @@ body {
   font-size: 15px;
 }
 
-/* ─── Setup Notice ───────────────────────────────────────── */
-#setup-notice {
-  display: none;
-  background: #fffbea;
-  border-bottom: 2px solid #f0b429;
-  padding: 14px 32px;
-  font-size: 0.88rem;
-  color: #5c4500;
-}
-#setup-notice strong { display: block; margin-bottom: 4px; font-size: 0.92rem; }
-#setup-notice a { color: #7d4e00; font-weight: 600; }
-
-/* ─── Header ─────────────────────────────────────────────── */
 .page-header {
   background: linear-gradient(135deg, var(--primary) 0%, #1a5276 65%, var(--accent) 100%);
   color: #fff;
@@ -113,7 +95,6 @@ body {
 }
 .inst-chip.guest { opacity: 0.65; }
 
-/* ─── TOC Nav ────────────────────────────────────────────── */
 .toc-strip {
   background: #fff;
   border-bottom: 1px solid var(--border);
@@ -156,14 +137,12 @@ body {
   font-weight: 700;
 }
 
-/* ─── Layout ─────────────────────────────────────────────── */
 .page-body {
   max-width: 900px;
   margin: 0 auto;
   padding: 36px 40px 80px;
 }
 
-/* ─── Agenda Sections ────────────────────────────────────── */
 .agenda-section { margin-bottom: 40px; }
 .section-header {
   display: flex;
@@ -190,7 +169,6 @@ body {
   flex: 1;
 }
 
-/* ─── Sub-sections ───────────────────────────────────────── */
 .subsection {
   background: var(--card);
   border: 1px solid var(--border);
@@ -236,7 +214,6 @@ body {
 }
 .subsection-body { padding: 18px 22px 20px; }
 
-/* ─── Tables ─────────────────────────────────────────────── */
 .info-table {
   width: 100%;
   border-collapse: collapse;
@@ -262,7 +239,6 @@ body {
 .info-table tr:first-child th,
 .info-table tr:first-child td { border-top: 2px solid var(--accent-light); }
 
-/* ─── Content Blocks ─────────────────────────────────────── */
 .content-block { margin-bottom: 16px; }
 .content-block-label {
   font-size: 0.78rem;
@@ -291,7 +267,6 @@ body {
 .bullet-list.indent { margin-left: 20px; }
 .bullet-list.indent li::before { background: var(--muted); opacity: 0.5; }
 
-/* ─── Decision Callout ───────────────────────────────────── */
 .decision-box {
   background: var(--decision-bg);
   border: 1px solid #f5c842;
@@ -327,7 +302,6 @@ body {
   font-weight: 700;
 }
 
-/* ─── Rule List ──────────────────────────────────────────── */
 .rule-list {
   list-style: none;
   padding: 0;
@@ -360,7 +334,6 @@ body {
 }
 .rule-list li strong { color: var(--primary); }
 
-/* ─── Person Cards ───────────────────────────────────────── */
 .person-row { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 12px; }
 .person-card {
   background: #f4f6f9;
@@ -378,175 +351,70 @@ body {
 }
 .person-card .name { font-weight: 600; color: var(--primary-dark); }
 
-/* ─── Comment Section ────────────────────────────────────── */
-.comment-section {
-  border-top: 1px solid var(--border-light);
-  background: var(--comment-bg);
-  padding: 18px 22px 20px;
+/* ─── Conference Schedule Section ──────────────────────── */
+.conf-card {
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  margin-bottom: 16px;
+  box-shadow: var(--shadow-sm);
+  overflow: hidden;
 }
-.comment-section-header {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  margin-bottom: 14px;
-  cursor: pointer;
-  user-select: none;
-}
-.comment-section-header h4 {
-  font-size: 0.83rem;
+.conf-card-header {
+  background: linear-gradient(90deg, var(--primary), var(--accent));
+  color: #fff;
+  padding: 12px 22px;
+  font-size: 0.95rem;
   font-weight: 700;
-  color: var(--muted);
-  letter-spacing: 0.8px;
-  text-transform: uppercase;
-  flex: 1;
 }
-.comment-count {
-  font-size: 0.75rem;
-  background: var(--accent-light);
+.conf-card-body { padding: 16px 22px; }
+.conf-card-body .info-table { margin-bottom: 0; }
+.conf-year-label {
+  font-size: 0.80rem;
+  font-weight: 700;
   color: var(--accent);
-  border-radius: 10px;
-  padding: 1px 9px;
-  font-weight: 700;
+  letter-spacing: 1px;
+  margin: 18px 0 10px;
+  padding-bottom: 4px;
+  border-bottom: 1px solid var(--border-light);
 }
-.comment-toggle {
-  background: none;
-  border: none;
-  cursor: pointer;
+.conf-year-label:first-child { margin-top: 0; }
+.conf-tbd {
+  font-size: 0.88rem;
   color: var(--muted);
-  padding: 2px;
-  display: flex;
-  align-items: center;
-  transition: transform 0.2s;
-}
-.comment-toggle.collapsed { transform: rotate(-90deg); }
-.comment-body { display: block; }
-.comment-body.hidden { display: none; }
-
-/* Comments list */
-.comments-list { margin-bottom: 14px; }
-.comment-item {
-  background: #fff;
-  border: 1px solid var(--comment-border);
-  border-radius: var(--radius-sm);
-  padding: 11px 15px;
-  margin-bottom: 8px;
-  animation: fadeIn 0.2s ease;
-}
-@keyframes fadeIn {
-  from { opacity: 0; transform: translateY(-4px); }
-  to   { opacity: 1; transform: translateY(0); }
-}
-.comment-header {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  margin-bottom: 7px;
-}
-.comment-author {
-  font-weight: 700;
-  font-size: 0.85rem;
-  color: var(--primary);
-}
-.comment-time {
-  font-size: 0.75rem;
-  color: var(--muted);
-  flex: 1;
-}
-.comment-delete {
-  background: none;
-  border: 1px solid transparent;
-  color: var(--muted);
-  cursor: pointer;
-  font-size: 0.78rem;
-  padding: 2px 8px;
-  border-radius: 3px;
-  transition: all 0.15s;
-  line-height: 1.6;
-  font-family: inherit;
-}
-.comment-delete:hover {
-  background: #fde8e8;
-  border-color: #f5c6c6;
-  color: var(--danger);
-}
-.comment-text {
-  font-size: 0.89rem;
-  color: var(--text);
-  line-height: 1.7;
-  word-break: break-word;
-}
-.no-comments {
-  font-size: 0.83rem;
-  color: var(--muted);
-  text-align: center;
-  padding: 10px 0 4px;
+  padding: 8px 0;
   font-style: italic;
 }
 
-/* Comment form */
-.comment-form { display: flex; flex-direction: column; gap: 8px; }
-.comment-form-row { display: flex; gap: 8px; }
-.comment-input-name {
-  width: 220px;
-  padding: 8px 12px;
-  border: 1px solid var(--border);
-  border-radius: var(--radius-sm);
-  font-size: 0.86rem;
-  font-family: inherit;
-  background: #fff;
-  color: var(--text);
-  transition: border-color 0.15s, box-shadow 0.15s;
-}
-.comment-input-name:focus {
-  outline: none;
-  border-color: var(--accent);
-  box-shadow: 0 0 0 2px rgba(40,116,166,0.12);
-}
-.comment-input-text {
+/* Calendar summary table */
+.calendar-table {
   width: 100%;
-  padding: 9px 12px;
-  border: 1px solid var(--border);
-  border-radius: var(--radius-sm);
+  border-collapse: collapse;
   font-size: 0.86rem;
-  font-family: inherit;
-  background: #fff;
-  color: var(--text);
-  resize: vertical;
-  min-height: 72px;
-  transition: border-color 0.15s, box-shadow 0.15s;
 }
-.comment-input-text:focus {
-  outline: none;
-  border-color: var(--accent);
-  box-shadow: 0 0 0 2px rgba(40,116,166,0.12);
-}
-.comment-submit {
-  align-self: flex-end;
+.calendar-table th {
   background: var(--primary);
   color: #fff;
-  border: none;
-  border-radius: var(--radius-sm);
-  padding: 9px 22px;
-  font-size: 0.86rem;
-  font-weight: 600;
-  cursor: pointer;
-  font-family: inherit;
-  transition: background 0.15s;
-  letter-spacing: 0.2px;
-}
-.comment-submit:hover { background: var(--accent); }
-.comment-submit:disabled { opacity: 0.5; cursor: not-allowed; }
-.offline-note {
+  padding: 10px 14px;
+  text-align: left;
   font-size: 0.80rem;
-  color: var(--muted);
-  text-align: center;
-  padding: 10px 12px;
-  background: #f0f2f5;
-  border-radius: var(--radius-sm);
-  border: 1px dashed var(--border);
+  letter-spacing: 0.5px;
+  font-weight: 600;
+}
+.calendar-table td {
+  padding: 10px 14px;
+  border-bottom: 1px solid var(--border);
+}
+.calendar-table tr:nth-child(even) td { background: #fafbfc; }
+.calendar-table .year-divider td {
+  background: var(--accent-light);
+  font-weight: 700;
+  color: var(--primary);
+  padding: 7px 14px;
+  font-size: 0.82rem;
+  letter-spacing: 0.5px;
 }
 
-/* ─── Footer ─────────────────────────────────────────────── */
 .page-footer {
   max-width: 900px;
   margin: 0 auto;
@@ -570,7 +438,6 @@ body {
   letter-spacing: 0.5px;
 }
 
-/* ─── Responsive ─────────────────────────────────────────── */
 @media (max-width: 680px) {
   .page-header { padding: 24px 20px 20px; }
   .page-header h1 { font-size: 1.3rem; }
@@ -578,30 +445,18 @@ body {
   .page-body { padding: 24px 16px 60px; }
   .subsection-header { padding: 14px 16px 12px; }
   .subsection-body { padding: 14px 16px 16px; }
-  .comment-section { padding: 14px 16px 16px; }
-  .comment-form-row { flex-direction: column; }
-  .comment-input-name { width: 100%; }
   .page-footer { padding: 16px 16px 40px; flex-direction: column; align-items: flex-start; }
   .info-table th { width: 36%; }
 }
 @media print {
-  .toc-strip, .comment-section, #setup-notice { display: none !important; }
+  .toc-strip { display: none !important; }
   .page-header { print-color-adjust: exact; -webkit-print-color-adjust: exact; }
-  .subsection { break-inside: avoid; }
+  .subsection, .conf-card { break-inside: avoid; }
 }
 </style>
 </head>
 <body>
 
-<!-- ── Setup Notice ──────────────────────────────────────── -->
-<div id="setup-notice">
-  <strong>コメント機能を有効にするには giscus のインストールが必要です</strong>
-  <a href="https://github.com/apps/giscus/installations/new" target="_blank" rel="noopener">こちらのリンク</a>
-  を開き、「Only select repositories」で <strong>VADHTXDatabase</strong> を選択してインストールしてください（約30秒）。
-  インストール後はページをリロードするとコメントが投稿できます。閲覧のみの場合は設定不要です。
-</div>
-
-<!-- ── Page Header ───────────────────────────────────────── -->
 <header class="page-header">
   <p class="org-label">Transplant &amp; VAD Database Consortium — NCVC / Osaka University</p>
   <h1>移植・VADデータベース合同 Web会議 議事録</h1>
@@ -626,39 +481,29 @@ body {
   </div>
 </header>
 
-<!-- ── Sticky TOC ────────────────────────────────────────── -->
 <nav class="toc-strip" aria-label="目次">
   <div class="toc-inner">
-    <a href="#section-1" class="toc-link">
-      <span class="toc-num" aria-hidden="true">1</span>ISHLT 2026 発表報告
-    </a>
-    <a href="#section-2" class="toc-link">
-      <span class="toc-num" aria-hidden="true">2</span>予定研究の概要説明
-    </a>
-    <a href="#section-3" class="toc-link">
-      <span class="toc-num" aria-hidden="true">3</span>今後の施設拡大について
-    </a>
+    <a href="#section-1" class="toc-link"><span class="toc-num" aria-hidden="true">1</span>ISHLT 2026 発表報告</a>
+    <a href="#section-2" class="toc-link"><span class="toc-num" aria-hidden="true">2</span>予定研究の概要説明</a>
+    <a href="#section-3" class="toc-link"><span class="toc-num" aria-hidden="true">3</span>今後の施設拡大について</a>
+    <a href="#section-ref" class="toc-link"><span class="toc-num" aria-hidden="true">&#9733;</span>学会スケジュール</a>
   </div>
 </nav>
 
-<!-- ── Main Content ──────────────────────────────────────── -->
 <main class="page-body">
 
-  <!-- ═══════════════════════════════════════════
-       AGENDA 1 — ISHLT 2026 発表報告
-  ═══════════════════════════════════════════ -->
+  <!-- ═══════════ AGENDA 1 ═══════════ -->
   <section class="agenda-section" id="section-1">
     <div class="section-header">
       <div class="section-badge" aria-hidden="true">1</div>
       <h2>Agenda 1 — ISHLT 2026 発表報告</h2>
     </div>
 
-    <!-- 1-1 -->
-    <article class="subsection" id="sub-1-1">
+    <article class="subsection">
       <div class="subsection-header">
         <span class="sub-num">1-1</span>
-        <h3>藤内 康平（大阪大学）— ISHLT 2026 Oral 発表報告
-          <span class="presenter-tag">大阪大学</span>
+        <h3>藤内 康平（NCVC / 大阪大学）— ISHLT 2026 Oral 発表報告
+          <span class="presenter-tag">NCVC / 大阪大学</span>
         </h3>
       </div>
       <div class="subsection-body">
@@ -686,15 +531,13 @@ body {
           </ul>
         </div>
       </div>
-      <div class="comment-section" id="cs-1-1"><!-- injected by JS --></div>
     </article>
 
-    <!-- 1-2 -->
-    <article class="subsection" id="sub-1-2">
+    <article class="subsection">
       <div class="subsection-header">
         <span class="sub-num">1-2</span>
-        <h3>柳野 佑輔（NCVC）— ISHLT 2026 Poster 発表報告
-          <span class="presenter-tag">NCVC</span>
+        <h3>柳野 佑輔（大阪大学）— ISHLT 2026 Poster 発表報告
+          <span class="presenter-tag">大阪大学</span>
         </h3>
       </div>
       <div class="subsection-body">
@@ -712,21 +555,17 @@ body {
           </ul>
         </div>
       </div>
-      <div class="comment-section" id="cs-1-2"><!-- injected by JS --></div>
     </article>
   </section>
 
-  <!-- ═══════════════════════════════════════════
-       AGENDA 2 — 予定研究の概要説明
-  ═══════════════════════════════════════════ -->
+  <!-- ═══════════ AGENDA 2 ═══════════ -->
   <section class="agenda-section" id="section-2">
     <div class="section-header">
       <div class="section-badge" aria-hidden="true">2</div>
       <h2>Agenda 2 — 予定研究の概要説明</h2>
     </div>
 
-    <!-- 2-1 -->
-    <article class="subsection" id="sub-2-1">
+    <article class="subsection">
       <div class="subsection-header">
         <span class="sub-num">2-1</span>
         <h3>仁井 陸冬（鳥取大学）— 研究計画概要
@@ -757,21 +596,17 @@ body {
           </ul>
         </div>
       </div>
-      <div class="comment-section" id="cs-2-1"><!-- injected by JS --></div>
     </article>
   </section>
 
-  <!-- ═══════════════════════════════════════════
-       AGENDA 3 — 今後の施設拡大について
-  ═══════════════════════════════════════════ -->
+  <!-- ═══════════ AGENDA 3 ═══════════ -->
   <section class="agenda-section" id="section-3">
     <div class="section-header">
       <div class="section-badge" aria-hidden="true">3</div>
       <h2>Agenda 3 — 今後の施設拡大について</h2>
     </div>
 
-    <!-- 3-1 -->
-    <article class="subsection" id="sub-3-1">
+    <article class="subsection">
       <div class="subsection-header">
         <span class="sub-num">3-1</span>
         <h3>施設拡大の方向性</h3>
@@ -806,11 +641,9 @@ body {
           </ul>
         </div>
       </div>
-      <div class="comment-section" id="cs-3-1"><!-- injected by JS --></div>
     </article>
 
-    <!-- 3-2 -->
-    <article class="subsection" id="sub-3-2">
+    <article class="subsection">
       <div class="subsection-header">
         <span class="sub-num">3-2</span>
         <h3>データベース運用・共有体制の確認</h3>
@@ -837,11 +670,9 @@ body {
           </ul>
         </div>
       </div>
-      <div class="comment-section" id="cs-3-2"><!-- injected by JS --></div>
     </article>
 
-    <!-- 3-3 -->
-    <article class="subsection" id="sub-3-3">
+    <article class="subsection">
       <div class="subsection-header">
         <span class="sub-num">3-3</span>
         <h3>多施設研究のルール策定
@@ -853,21 +684,13 @@ body {
           以下のルールが全員の合意のもと決定された。
         </p>
         <ol class="rule-list">
-          <li>
-            <strong>学会発表前：</strong>
-            研究に参加しているすべての研究者にメールで事前通達（発表内容を共有）
-          </li>
-          <li>
-            <strong>論文投稿前：</strong>
-            論文ドラフトをすべての研究者に添付し、<strong>全員の承認を得た上でサブミット</strong>する
-          </li>
+          <li><strong>学会発表前：</strong>研究に参加しているすべての研究者にメールで事前通達（発表内容を共有）</li>
+          <li><strong>論文投稿前：</strong>論文ドラフトをすべての研究者に添付し、<strong>全員の承認を得た上でサブミット</strong>する</li>
         </ol>
       </div>
-      <div class="comment-section" id="cs-3-3"><!-- injected by JS --></div>
     </article>
 
-    <!-- 3-4 -->
-    <article class="subsection" id="sub-3-4">
+    <article class="subsection">
       <div class="subsection-header">
         <span class="sub-num">3-4</span>
         <h3>その他の研究計画
@@ -890,11 +713,9 @@ body {
           </ul>
         </div>
       </div>
-      <div class="comment-section" id="cs-3-4"><!-- injected by JS --></div>
     </article>
 
-    <!-- 3-5 -->
-    <article class="subsection" id="sub-3-5">
+    <article class="subsection">
       <div class="subsection-header">
         <span class="sub-num">3-5</span>
         <h3>今後のスケジュール・次回会議</h3>
@@ -924,199 +745,140 @@ body {
           </ul>
         </div>
       </div>
-      <div class="comment-section" id="cs-3-5"><!-- injected by JS --></div>
+    </article>
+  </section>
+
+  <!-- ═══════════ REFERENCE: CONFERENCE SCHEDULE ═══════════ -->
+  <section class="agenda-section" id="section-ref">
+    <div class="section-header">
+      <div class="section-badge" aria-hidden="true" style="font-size:0.95rem;">&#9733;</div>
+      <h2>参考：関連学会スケジュール（2026〜2027年）</h2>
+    </div>
+
+    <!-- 心臓移植学会 -->
+    <div class="conf-card">
+      <div class="conf-card-header">日本心臓移植学会（JSHT）</div>
+      <div class="conf-card-body">
+        <p class="conf-year-label">2026年</p>
+        <table class="info-table">
+          <tbody>
+            <tr><th>大会名</th><td>第45回 日本心臓移植学会学術集会</td></tr>
+            <tr><th>会期</th><td>2026年6月20日（土）〜 21日（日）</td></tr>
+            <tr><th>会場</th><td>JA共済ビル カンファレンスホール（東京都千代田区平河町）</td></tr>
+            <tr><th>会長</th><td>鈴木 孝明（埼玉医科大学国際医療センター）</td></tr>
+            <tr><th>テーマ</th><td>「ココロをツナグ — Linking Heart to Life, Uniting Spirits through Transplantation」</td></tr>
+          </tbody>
+        </table>
+        <p class="conf-year-label">2027年</p>
+        <p class="conf-tbd">第46回 日本心臓移植学会学術集会 — 日程・会場等の詳細は未公表（例年6〜7月頃の開催）</p>
+      </div>
+    </div>
+
+    <!-- 移植学会 -->
+    <div class="conf-card">
+      <div class="conf-card-header">日本移植学会（JST）</div>
+      <div class="conf-card-body">
+        <p class="conf-year-label">2026年</p>
+        <table class="info-table">
+          <tbody>
+            <tr><th>大会名</th><td>第62回 日本移植学会総会</td></tr>
+            <tr><th>会期</th><td>2026年9月10日（木）〜 12日（土）</td></tr>
+            <tr><th>会場</th><td>京王プラザホテル（東京都新宿区西新宿）</td></tr>
+            <tr><th>総会長</th><td>河地 茂行（東京医科大学八王子医療センター 消化器外科・移植外科）</td></tr>
+            <tr><th>テーマ</th><td>「医療の醍醐味を伝える — The Heart of Transplantation Medicine」</td></tr>
+          </tbody>
+        </table>
+        <p class="conf-year-label">2027年</p>
+        <table class="info-table">
+          <tbody>
+            <tr><th>大会名</th><td>第63回 日本移植学会総会</td></tr>
+            <tr><th>会期</th><td>2027年10月6日（水）〜 8日（金）</td></tr>
+            <tr><th>会場</th><td>函館アリーナ・函館市民会館（北海道函館市）</td></tr>
+            <tr><th>総会長</th><td>岡田 克典（東北大学加齢医学研究所 呼吸器外科学分野）</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- 人工臓器学会 -->
+    <div class="conf-card">
+      <div class="conf-card-header">日本人工臓器学会（JSAO）</div>
+      <div class="conf-card-body">
+        <p class="conf-year-label">2026年</p>
+        <table class="info-table">
+          <tbody>
+            <tr><th>大会名</th><td>第64回 日本人工臓器学会大会</td></tr>
+            <tr><th>会期</th><td>2026年11月3日（火・祝）〜 5日（木）</td></tr>
+            <tr><th>会場</th><td>キオクシア アイーナ ＋ マリオス（岩手県盛岡市）</td></tr>
+            <tr><th>大会長</th><td>阿部 貴弥（岩手医科大学 泌尿器科学講座）</td></tr>
+            <tr><th>テーマ</th><td>「サイエンスとアート 〜 次世代への継承と挑戦 〜」</td></tr>
+          </tbody>
+        </table>
+        <p class="conf-year-label">2027年</p>
+        <table class="info-table">
+          <tbody>
+            <tr><th>大会名</th><td>第65回 日本人工臓器学会大会</td></tr>
+            <tr><th>会期</th><td>2027年11月11日（木）〜 13日（土）</td></tr>
+            <tr><th>会場</th><td>アクロス福岡（福岡市）</td></tr>
+            <tr><th>大会長</th><td>塩瀬 明（九州大学大学院医学研究院 循環器外科）</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- Calendar summary -->
+    <article class="subsection">
+      <div class="subsection-header">
+        <span class="sub-num" style="background:var(--primary);color:#fff;">一覧</span>
+        <h3>年間カレンダー（2026〜2027年）</h3>
+      </div>
+      <div class="subsection-body" style="padding:0;">
+        <table class="calendar-table">
+          <thead>
+            <tr><th>日程</th><th>学会名</th><th>開催地</th></tr>
+          </thead>
+          <tbody>
+            <tr class="year-divider"><td colspan="3">2026年</td></tr>
+            <tr><td>6月20〜21日</td><td>第45回 日本心臓移植学会学術集会</td><td>東京（千代田区）</td></tr>
+            <tr><td>9月10〜12日</td><td>第62回 日本移植学会総会</td><td>東京（新宿区）</td></tr>
+            <tr><td>11月3〜5日</td><td>第64回 日本人工臓器学会大会</td><td>岩手県盛岡市</td></tr>
+            <tr class="year-divider"><td colspan="3">2027年</td></tr>
+            <tr><td>10月6〜8日</td><td>第63回 日本移植学会総会</td><td>北海道函館市</td></tr>
+            <tr><td>11月11〜13日</td><td>第65回 日本人工臓器学会大会</td><td>福岡市</td></tr>
+          </tbody>
+        </table>
+      </div>
     </article>
 
   </section>
 
 </main>
 
-<!-- ── Footer ─────────────────────────────────────────────── -->
 <footer class="page-footer">
   <span>記録：音声入力より作成（2026-04-14）</span>
   <span class="footer-badge">CONFIDENTIAL — 関係者限定</span>
   <span>Transplant &amp; VAD Database Consortium</span>
 </footer>
 
-<\!-- ════════════════════════════════════════════════════════
-  COMMENT SYSTEM: GitHub Discussions via giscus
-  ─────────────────────────────────────────────────────────
-  Repo   : KTonai103/VADHTXDatabase
-  Repo ID: R_kgDOSCZf-g
-  Category: General (DIC_kwDOSCZf-s4C603g)
-
-  必要な設定（一度だけ）:
-    https://github.com/apps/giscus にアクセスし、
-    "Only select repositories" で VADHTXDatabase を選択してインストール。
-════════════════════════════════════════════════════════ -->
 <script>
 'use strict';
-
-// ── giscus configuration ─────────────────────────────────
-const GISCUS = {
-  repo:       'KTonai103/VADHTXDatabase',
-  repoId:     'R_kgDOSCZf-g',
-  category:   'General',
-  categoryId: 'DIC_kwDOSCZf-s4C603g',
-  lang:       'ja',
-  theme:      'light'
-};
-
-const SECTION_IDS = ['1-1', '1-2', '2-1', '3-1', '3-2', '3-3', '3-4', '3-5'];
-
-// ── Bootstrap ────────────────────────────────────────────
-(function init() {
-  SECTION_IDS.forEach(function(id) { buildCommentUI(id); });
-  initTOC();
-})();
-
-// ── Build comment UI (header + giscus placeholder) ───────
-function buildCommentUI(sectionId) {
-  const container = document.getElementById('cs-' + sectionId);
-  if (\!container) return;
-
-  // Header
-  const header = document.createElement('div');
-  header.className = 'comment-section-header';
-  header.setAttribute('role', 'button');
-  header.setAttribute('tabindex', '0');
-  header.setAttribute('aria-expanded', 'true');
-  header.setAttribute('aria-controls', 'gbody-' + sectionId);
-  header.addEventListener('click', function() { toggleComments(sectionId); });
-  header.addEventListener('keydown', function(e) {
-    if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); toggleComments(sectionId); }
-  });
-
-  // Chat icon
-  var iconSvg = makeSvg('0 0 24 24', '<path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/>');
-  iconSvg.setAttribute('width', '15'); iconSvg.setAttribute('height', '15');
-
-  var title = document.createElement('h4');
-  title.textContent = 'コメント・注記';
-
-  var note = document.createElement('span');
-  note.style.cssText = 'font-size:0.72rem;color:var(--muted);font-weight:normal;margin-left:4px;';
-  note.textContent = '(GitHub アカウントで投稿)';
-
-  var toggleBtn = document.createElement('button');
-  toggleBtn.className = 'comment-toggle';
-  toggleBtn.id = 'toggle-btn-' + sectionId;
-  toggleBtn.setAttribute('aria-label', 'コメントを開閉');
-  toggleBtn.setAttribute('tabindex', '-1');
-  var chevron = makeSvg('0 0 24 24', '<polyline points="6 9 12 15 18 9"/>');
-  chevron.setAttribute('width', '14'); chevron.setAttribute('height', '14');
-  toggleBtn.appendChild(chevron);
-
-  header.appendChild(iconSvg);
-  header.appendChild(title);
-  header.appendChild(note);
-  header.appendChild(toggleBtn);
-
-  // Giscus body
-  var body = document.createElement('div');
-  body.id = 'gbody-' + sectionId;
-  body.className = 'giscus-body';
-  body.style.cssText = 'padding:16px 22px 20px;background:var(--comment-bg);';
-
-  // Placeholder shown until giscus loads
-  var placeholder = document.createElement('div');
-  placeholder.id = 'gph-' + sectionId;
-  placeholder.style.cssText = 'font-size:0.82rem;color:var(--muted);text-align:center;padding:12px 0;';
-  placeholder.textContent = '読み込み中…';
-  body.appendChild(placeholder);
-
-  container.appendChild(header);
-  container.appendChild(body);
-
-  // Lazy-load giscus when section scrolls into view
-  if ('IntersectionObserver' in window) {
-    var obs = new IntersectionObserver(function(entries, o) {
-      entries.forEach(function(entry) {
-        if (\!entry.isIntersecting) return;
-        o.unobserve(entry.target);
-        injectGiscus(body, sectionId);
-      });
-    }, { rootMargin: '300px' });
-    obs.observe(body);
-  } else {
-    injectGiscus(body, sectionId);
-  }
-}
-
-// ── Inject giscus widget ─────────────────────────────────
-function injectGiscus(container, sectionId) {
-  var term = 'mtg-20260414-sec-' + sectionId;
-  var script = document.createElement('script');
-  script.src = 'https://giscus.app/client.js';
-  script.async = true;
-  script.crossOrigin = 'anonymous';
-  script.setAttribute('data-repo',              GISCUS.repo);
-  script.setAttribute('data-repo-id',           GISCUS.repoId);
-  script.setAttribute('data-category',          GISCUS.category);
-  script.setAttribute('data-category-id',       GISCUS.categoryId);
-  script.setAttribute('data-mapping',           'specific');
-  script.setAttribute('data-term',              term);
-  script.setAttribute('data-strict',            '0');
-  script.setAttribute('data-reactions-enabled', '0');
-  script.setAttribute('data-emit-metadata',     '0');
-  script.setAttribute('data-input-position',    'bottom');
-  script.setAttribute('data-theme',             GISCUS.theme);
-  script.setAttribute('data-lang',              GISCUS.lang);
-  container.appendChild(script);
-
-  // Remove placeholder once giscus iframe arrives
-  script.addEventListener('load', function() {
-    var ph = document.getElementById('gph-' + sectionId);
-    if (ph) ph.remove();
-  });
-}
-
-// ── Toggle ────────────────────────────────────────────────
-function toggleComments(sectionId) {
-  var body    = document.getElementById('gbody-' + sectionId);
-  var btn     = document.getElementById('toggle-btn-' + sectionId);
-  var header  = body && body.previousElementSibling;
-  if (\!body) return;
-  var isHidden = body.classList.toggle('hidden');
-  if (btn)    btn.classList.toggle('collapsed', isHidden);
-  if (header) header.setAttribute('aria-expanded', String(\!isHidden));
-}
-
-// ── SVG helper (static shapes only, no user data) ────────
-function makeSvg(viewBox, innerMarkup) {
-  var svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
-  svg.setAttribute('viewBox', viewBox);
-  svg.setAttribute('fill', 'none');
-  svg.setAttribute('stroke', 'currentColor');
-  svg.setAttribute('stroke-width', '2');
-  svg.setAttribute('stroke-linecap', 'round');
-  svg.setAttribute('stroke-linejoin', 'round');
-  svg.setAttribute('aria-hidden', 'true');
-  // Safe: innerMarkup contains only static SVG shape definitions (no user data)
-  svg.innerHTML = innerMarkup;
-  return svg;
-}
-
-// ── Sticky TOC active state ───────────────────────────────
-function initTOC() {
-  var sectionIds = ['section-1', 'section-2', 'section-3'];
-  var links      = document.querySelectorAll('.toc-link');
-  if (\!('IntersectionObserver' in window)) return;
-
+(function() {
+  var ids   = ['section-1', 'section-2', 'section-3', 'section-ref'];
+  var links = document.querySelectorAll('.toc-link');
+  if (!('IntersectionObserver' in window)) return;
   var obs = new IntersectionObserver(function(entries) {
-    entries.forEach(function(entry) {
-      if (\!entry.isIntersecting) return;
+    entries.forEach(function(e) {
+      if (!e.isIntersecting) return;
       links.forEach(function(l) { l.classList.remove('active'); });
-      var active = document.querySelector('.toc-link[href="#' + entry.target.id + '"]');
-      if (active) active.classList.add('active');
+      var a = document.querySelector('.toc-link[href="#' + e.target.id + '"]');
+      if (a) a.classList.add('active');
     });
   }, { rootMargin: '-15% 0px -70% 0px' });
-
-  sectionIds.forEach(function(id) {
+  ids.forEach(function(id) {
     var el = document.getElementById(id);
     if (el) obs.observe(el);
   });
-}
+})();
 </script>
 
 </body>
